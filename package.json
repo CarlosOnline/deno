@@ -1,0 +1,8 @@
+{
+  "name": "deno",
+  "version": "1.0.0",
+  "main": "main.ts",
+  "repository": "https://github.com/CarlosOnline/deno.git",
+  "author": "cgomes@iinet.com",
+  "license": "MIT"
+}

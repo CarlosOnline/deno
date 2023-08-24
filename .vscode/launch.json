@@ -4,19 +4,5 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Launch Program",
-      "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}\\renumber.js",
-      "args": [
-        "e:\\mc\\pno-services\\OnPremises\\CustomerPlanningSimulator\\Simulator\\CustomerPlanningSimulator.Lib\\Data"
-        //"pno"
-        //"mc"
-        //"d:\\Marel\\Telemetry\\sensorx.machine.product-data\\2019-12-12\\20191212000020383-2e90ad67fac74de79a62c1ccb33f84c3-sensorx.machine.product-data.json",
-        //"d:\\Marel\\Telemetry\\sensorx.machine.product-data\\2019-12-12"
-      ]
-    }
   ]
 }
