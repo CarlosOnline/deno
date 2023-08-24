@@ -1,0 +1,54 @@
+import {
+  ensureDirSync,
+  existsSync,
+} from "https://deno.land/std/fs/mod.ts";
+import { dirname } from "https://deno.land/std/path/mod.ts";
+
+const { mkdirSync, removeSync } = Deno;
+
+import Utility from "./utility.ts";
+
+export default class Path {
+  static exists(filePath: string) {
+    return existsSync(filePath);
+  }
+
+  static ensure_directory(folder: string) {
+    try {
+      ensureDirSync(folder);
+      return;
+    } catch (err) {
+      Utility.error(`ensure_directory: ${folder}`, err);
+    }
+  }
+
+  static create_directory(folder: string) {
+    return mkdirSync(folder, { recursive: true });
+  }
+
+  static remove_directory(path: string) {
+    removeSync(path, { recursive: true });
+  }
+
+  static get_drive(filePath: string) {
+    let folder = dirname(filePath);
+    while (folder != dirname(folder)) {
+      folder = dirname(folder);
+    }
+    return folder.replace("\\", "");
+  }
+
+  static get_first_folder(filePath: string) {
+    let folder = dirname(filePath);
+    while (folder != dirname(folder)) {
+      folder = dirname(folder);
+    }
+    let drive = folder;
+
+    folder = dirname(filePath);
+    while (dirname(folder) != drive) {
+      folder = dirname(folder);
+    }
+    return folder;
+  }
+}
