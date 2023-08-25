@@ -1,6 +1,8 @@
+import { action } from "../support/index.ts";
 import Options from "../support/options.ts";
 
 export default class RestCommands {
+  @action("token", "Get authorization token")
   async getToken() {
     const formBody: string[] = [];
     (<string[][]>Options.token.body).forEach((pair) => {
@@ -38,5 +40,10 @@ export default class RestCommands {
     }
 
     return token;
+  }
+
+  @action("test", "test")
+  testMethod() {
+    console.log("Test method called");
   }
 }
