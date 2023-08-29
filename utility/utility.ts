@@ -1,5 +1,6 @@
+import Options from "../support/options.ts";
 import File from "./utility.file.ts";
-import Log from "./utility.log.ts";
+import Log, { logger } from "./utility.log.ts";
 import Path from "./utility.path.ts";
 
 export interface RunOptions {
@@ -7,6 +8,8 @@ export interface RunOptions {
   capture?: boolean;
   noWait?: boolean;
   async?: boolean;
+  skipEscape?: boolean;
+  skipDiagnostics?: boolean;
 }
 
 export const DefaultRunOptions: RunOptions = {
@@ -14,6 +17,8 @@ export const DefaultRunOptions: RunOptions = {
   capture: false,
   noWait: false,
   async: false,
+  skipEscape: false,
+  skipDiagnostics: false,
 };
 
 declare type RunPipe = "inherit" | "piped" | "null" | number;
@@ -29,12 +34,17 @@ export default class Utility {
     folder = "",
     runOptions: RunOptions = DefaultRunOptions
   ): string {
+    if (runOptions.verbose || Options.verbose) {
+      const exe = Utility.path.basename(cmd);
+      logger.info(`${exe} ${args.join(" ")}`);
+    }
+
     const cmdOptions = Utility.getRunOptions(args, folder, runOptions);
     const commander = new Deno.Command(cmd, cmdOptions);
 
     if (!runOptions.noWait) {
       const results = commander.outputSync();
-      return Utility.procesRun(results, runOptions);
+      return Utility.procesRun(results, runOptions, cmd, args);
     } else {
       return "";
     }
@@ -51,7 +61,7 @@ export default class Utility {
 
     if (!runOptions.noWait) {
       const results = await commander.output();
-      return Utility.procesRun(results, runOptions);
+      return Utility.procesRun(results, runOptions, cmd, args);
     } else {
       return "";
     }
@@ -75,6 +85,7 @@ export default class Utility {
       stdout: stdout,
       stderr: stderr,
       cwd: folder,
+      windowsRawArguments: runOptions.skipEscape ? false : true,
     };
 
     if (runOptions.capture) {
@@ -87,7 +98,9 @@ export default class Utility {
 
   private static procesRun(
     results: Deno.CommandOutput,
-    runOptions: RunOptions
+    runOptions: RunOptions,
+    cmd: string,
+    args: string[]
   ) {
     let stdout = "";
     let stderr = "";
@@ -99,6 +112,12 @@ export default class Utility {
     }
 
     if (!results.success || results.code != 0) {
+      if (!runOptions.skipDiagnostics || Options.debug) {
+        const exe = Utility.path.basename(cmd);
+        logger.error(
+          `ERROR ${results.code} ${exe} ${args.join(" ")}\r\n${stderr}`
+        );
+      }
       return `ERROR: ${stderr}`;
     }
 

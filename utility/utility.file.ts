@@ -4,7 +4,7 @@ export default class File {
 
     for (const dirEntry of Deno.readDirSync(folder)) {
       if (dirEntry.isDirectory) {
-        results.push(dirEntry.name);
+        results.push(`${folder}/${dirEntry.name}`);
       }
     }
 

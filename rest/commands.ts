@@ -1,5 +1,6 @@
 import { action } from "../support/index.ts";
 import Options from "../support/options.ts";
+import { logger } from "../utility/index.ts";
 
 export default class RestCommands {
   @action("token", "Get authorization token")
@@ -29,14 +30,14 @@ export default class RestCommands {
 
     const body = await resp.json();
     const token = body.access_token;
-    console.log(token);
+    logger.info(token);
 
     if (Options.token.outputFilePath) {
       const encoder = new TextEncoder();
       const data = encoder.encode(token);
       Deno.writeFileSync(Options.token.outputFilePath, data);
-      console.log();
-      console.log(`Generated ${Options.token.outputFilePath}`);
+      logger.info();
+      logger.info(`Generated ${Options.token.outputFilePath}`);
     }
 
     return token;
@@ -44,6 +45,6 @@ export default class RestCommands {
 
   @action("test", "test")
   testMethod() {
-    console.log("Test method called");
+    logger.info("Test method called");
   }
 }

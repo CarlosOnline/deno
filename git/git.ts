@@ -2,15 +2,23 @@ import Options from "../support/options.ts";
 import Utility from "../utility/utility.ts";
 
 export interface Config {
-  branch?: string;
-  defaultBranch?: string;
-  status?: string[];
+  branch: string;
+  defaultBranch: string;
+  develop: string;
+  folder: string;
+  isMainBranch: boolean;
+  remotes: string[];
+  status: string[];
   url: string;
 }
 
 const DefaultConfig: Config = {
   branch: "",
   defaultBranch: "",
+  develop: "",
+  folder: "",
+  isMainBranch: false,
+  remotes: [],
   status: [],
   url: "",
 };
@@ -21,7 +29,7 @@ export class Git {
     if (!config) return "";
 
     return Utility.run(
-      Options.git,
+      Options.git.cmd,
       "rev-parse --abbrev-ref HEAD".split(" "),
       folder,
       {
@@ -57,7 +65,7 @@ export class Git {
     if (!config) return "";
 
     const remoteInfo = Utility.run(
-      Options.git,
+      Options.git.cmd,
       "remote show origin".split(" "),
       folder,
       {
@@ -79,9 +87,22 @@ export class Git {
     const config = this.config(folder);
     if (!config) return null;
 
+    config.folder = folder;
     config.branch = this.branch(folder);
     config.defaultBranch = this.defaultBranch(folder);
+    config.develop = config.defaultBranch;
+    config.remotes = this.remoteBranches(folder);
     config.status = this.status(folder);
+
+    const mainBranches = [config.defaultBranch, ...Options.git.mainBranches];
+    const remoteMainBranches = config.remotes.filter((value) =>
+      mainBranches.includes(value)
+    );
+    config.isMainBranch = remoteMainBranches.indexOf(config.branch) != -1;
+
+    if (remoteMainBranches.indexOf(Options.git.develop) != -1) {
+      config.develop = Options.git.develop;
+    }
 
     return config;
   }
@@ -93,24 +114,73 @@ export class Git {
     return config.url?.length > 0;
   }
 
+  listRepos(folder: string = Deno.cwd()) {
+    return Utility.file
+      .listDirectories(folder)
+      .filter((item) => this.isRepo(item));
+  }
+
+  merge(branch: string, folder: string = Deno.cwd()) {
+    Utility.run(Options.git.cmd, `merge ${branch}`.split(" "), folder);
+  }
+
+  mergeFromBranch(branch: string, folder: string = Deno.cwd()) {
+    const info = this.info(folder);
+    if (!info) return;
+
+    this.pull(folder);
+
+    if (info.branch == branch) {
+      return;
+    }
+
+    this.merge(branch, folder);
+  }
+
+  remoteBranches(folder: string = Deno.cwd()): string[] {
+    return Utility.run(
+      Options.git.cmd,
+      'branch -r --list "origin/[^H]*"'.split(" "),
+      folder,
+      {
+        capture: true,
+      }
+    )
+      .split("\n")
+      .map((item) => item.trim().replace("origin/", ""));
+  }
+
   status(folder: string = Deno.cwd()): string[] {
     const config = this.config(folder);
     if (!config) return [];
 
-    const results = Utility.run(Options.git, "status -s".split(" "), folder, {
-      capture: true,
-    });
+    const results = Utility.run(
+      Options.git.cmd,
+      "status -s".split(" "),
+      folder,
+      {
+        capture: true,
+      }
+    );
 
     return results.split("\n").map((item) => item.trim());
   }
 
-  private getConfigFile(folder: string = Deno.cwd()) {
-    const configFilePath = `${folder}/.git/config`;
-    const fileInfo = Deno.statSync(configFilePath);
-    if (!fileInfo || !fileInfo.isFile) {
-      return false;
-    }
+  pull(folder: string = Deno.cwd()) {
+    Utility.run(Options.git.cmd, "pull".split(" "), folder);
+  }
 
-    return Utility.file.readFile(configFilePath)?.trim();
+  private getConfigFile(folder: string = Deno.cwd()) {
+    try {
+      const configFilePath = `${folder}/.git/config`;
+      const fileInfo = Deno.statSync(configFilePath);
+      if (!fileInfo || !fileInfo.isFile) {
+        return false;
+      }
+
+      return Utility.file.readFile(configFilePath)?.trim();
+    } catch {
+      return null;
+    }
   }
 }

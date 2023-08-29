@@ -1,11 +1,16 @@
 import { ensureDirSync, existsSync } from "https://deno.land/std/fs/mod.ts";
 import { dirname } from "https://deno.land/std/path/mod.ts";
+import { basename } from "https://deno.land/std@0.184.0/path/mod.ts";
 
 const { mkdirSync, removeSync } = Deno;
 
 import Utility from "./utility.ts";
 
 export default class Path {
+  static basename(filePath: string) {
+    return basename(filePath);
+  }
+
   static exists(filePath: string) {
     return existsSync(filePath);
   }
@@ -40,7 +45,7 @@ export default class Path {
     while (folder != dirname(folder)) {
       folder = dirname(folder);
     }
-    let drive = folder;
+    const drive = folder;
 
     folder = dirname(filePath);
     while (dirname(folder) != drive) {

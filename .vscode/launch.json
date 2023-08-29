@@ -12,6 +12,7 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "C:\\Users\\Carlos\\AppData\\Local\\Microsoft\\WinGet\\Links\\deno.EXE",
       "runtimeArgs": ["run", "--unstable", "--inspect-wait", "--allow-all"],
+      "args": ["tests"],
       "attachSimplePort": 9229
     }
   ]

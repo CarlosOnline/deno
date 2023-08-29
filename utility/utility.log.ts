@@ -31,3 +31,5 @@ export default class Log {
     Deno.exit(-1);
   }
 }
+
+export const logger = Log;

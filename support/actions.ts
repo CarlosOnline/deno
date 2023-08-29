@@ -1,3 +1,5 @@
+import { logger } from "../utility/index.ts";
+
 // deno-lint-ignore-file no-explicit-any
 export interface Action {
   names: string[];
@@ -39,7 +41,7 @@ export class ActionRunner {
       return;
     }
 
-    console.log(`Running ${name}`);
+    logger.info(`Running ${name}`);
     await action.target();
   }
 }
