@@ -56,6 +56,11 @@ export default class Utility {
     folder = "",
     runOptions: RunOptions = DefaultRunOptions
   ): Promise<string> {
+    if (runOptions.verbose || Options.verbose) {
+      const exe = Utility.path.basename(cmd);
+      logger.info(`${exe} ${args.join(" ")}`);
+    }
+
     const cmdOptions = Utility.getRunOptions(args, folder, runOptions);
     const commander = new Deno.Command(cmd, cmdOptions);
 

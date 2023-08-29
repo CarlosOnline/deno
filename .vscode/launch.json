@@ -9,10 +9,11 @@
       "name": "Launch Program",
       "type": "node",
       "program": "${workspaceFolder}/main.ts",
-      "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "C:\\Users\\Carlos\\AppData\\Local\\Microsoft\\WinGet\\Links\\deno.EXE",
+      //"cwd": "${workspaceFolder}",
+      "cwd": "c:\\coti\\rca-db-arkopty",
+      "runtimeExecutable": "deno.EXE",
       "runtimeArgs": ["run", "--unstable", "--inspect-wait", "--allow-all"],
-      "args": ["tests"],
+      "args": ["git.develop", "develop", "--verbose"],
       "attachSimplePort": 9229
     }
   ]

@@ -75,23 +75,20 @@ export class Git {
     const config = this.config(folder);
     if (!config) return "";
 
-    const remoteInfo = await Utility.runAsync(
+    const results = await Utility.runAsync(
       Options.git.cmd,
-      "remote show origin".split(" "),
+      "symbolic-ref refs/remotes/origin/HEAD --short".split(" "),
       folder,
       {
         capture: true,
       }
     );
 
-    const headBranchLine = remoteInfo
-      .split("\n")
-      .find((line) => line.trim().startsWith("HEAD branch:"));
-    if (!headBranchLine) {
-      return "";
-    }
+    return results.trim().replace("origin/", "");
+  }
 
-    return headBranchLine.replace("HEAD branch:", "").trim();
+  async fetch(folder: string = Deno.cwd()) {
+    await Utility.runAsync(Options.git.cmd, "fetch".split(" "), folder);
   }
 
   async info(folder: string = Deno.cwd()): Promise<Config | null> {
