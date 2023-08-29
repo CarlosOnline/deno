@@ -7,6 +7,7 @@ export class DefaultOptions {
   scriptFolder = "";
   args: string[] = [];
   git = "C:/Program Files/Git/cmd/git.exe";
+  cwdBackup = Deno.cwd();
 }
 
 class OptionsParser {

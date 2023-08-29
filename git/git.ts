@@ -10,7 +10,7 @@ const DefaultConfig: Config = {
 };
 
 export class Git {
-  async branch(folder: string): Promise<string> {
+  async branch(folder: string = Deno.cwd()): Promise<string> {
     const config = this.config(folder);
     if (!config) return "";
 
@@ -24,7 +24,7 @@ export class Git {
     );
   }
 
-  config(folder: string) {
+  config(folder: string = Deno.cwd()) {
     const contents = this.getConfigFile(folder);
     if (!contents) {
       return null;
@@ -46,14 +46,23 @@ export class Git {
     return config;
   }
 
-  isRepo(folder: string): boolean {
+  isRepo(folder: string = Deno.cwd()): boolean {
     const config = this.config(folder);
     if (!config) return false;
 
     return config.url?.length > 0;
   }
 
-  private getConfigFile(folder: string) {
+  async status(folder: string = Deno.cwd()): Promise<string> {
+    const config = this.config(folder);
+    if (!config) return "";
+
+    return await Utility.run(Options.git, "status -s".split(" "), folder, {
+      capture: true,
+    });
+  }
+
+  private getConfigFile(folder: string = Deno.cwd()) {
     const configFilePath = `${folder}/.git/config`;
     const fileInfo = Deno.statSync(configFilePath);
     if (!fileInfo || !fileInfo.isFile) {
