@@ -6,6 +6,7 @@ export class DefaultOptions {
   env = "";
   scriptFolder = "";
   args: string[] = [];
+  git = "C:/Program Files/Git/cmd/git.exe";
 }
 
 class OptionsParser {

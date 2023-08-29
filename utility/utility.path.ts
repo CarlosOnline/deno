@@ -1,7 +1,4 @@
-import {
-  ensureDirSync,
-  existsSync,
-} from "https://deno.land/std/fs/mod.ts";
+import { ensureDirSync, existsSync } from "https://deno.land/std/fs/mod.ts";
 import { dirname } from "https://deno.land/std/path/mod.ts";
 
 const { mkdirSync, removeSync } = Deno;
@@ -18,7 +15,7 @@ export default class Path {
       ensureDirSync(folder);
       return;
     } catch (err) {
-      Utility.error(`ensure_directory: ${folder}`, err);
+      Utility.log.error(`ensure_directory: ${folder}`, err);
     }
   }
 
