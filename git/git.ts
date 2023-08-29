@@ -38,6 +38,17 @@ export class Git {
     );
   }
 
+  async checkout(branch: string, folder: string = Deno.cwd()) {
+    const info = await this.info(folder);
+    if (!info) return;
+
+    await Utility.runAsync(
+      Options.git.cmd,
+      `checkout ${branch}`.split(" "),
+      folder
+    );
+  }
+
   config(folder: string = Deno.cwd()) {
     const contents = this.getConfigFile(folder);
     if (!contents) {
@@ -132,7 +143,7 @@ export class Git {
     const info = await this.info(folder);
     if (!info) return;
 
-    this.pull(folder);
+    await this.pull(folder);
 
     if (info.branch == branch) {
       return;
