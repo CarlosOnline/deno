@@ -24,11 +24,11 @@ const DefaultConfig: Config = {
 };
 
 export class Git {
-  branch(folder: string = Deno.cwd()): string {
+  async branch(folder: string = Deno.cwd()): Promise<string> {
     const config = this.config(folder);
     if (!config) return "";
 
-    return Utility.run(
+    return await Utility.runAsync(
       Options.git.cmd,
       "rev-parse --abbrev-ref HEAD".split(" "),
       folder,
@@ -60,11 +60,11 @@ export class Git {
     return config;
   }
 
-  defaultBranch(folder: string = Deno.cwd()): string {
+  async defaultBranch(folder: string = Deno.cwd()): Promise<string> {
     const config = this.config(folder);
     if (!config) return "";
 
-    const remoteInfo = Utility.run(
+    const remoteInfo = await Utility.runAsync(
       Options.git.cmd,
       "remote show origin".split(" "),
       folder,
@@ -83,16 +83,16 @@ export class Git {
     return headBranchLine.replace("HEAD branch:", "").trim();
   }
 
-  info(folder: string = Deno.cwd()) {
+  async info(folder: string = Deno.cwd()): Promise<Config | null> {
     const config = this.config(folder);
     if (!config) return null;
 
     config.folder = folder;
-    config.branch = this.branch(folder);
-    config.defaultBranch = this.defaultBranch(folder);
+    config.branch = await this.branch(folder);
+    config.defaultBranch = await this.defaultBranch(folder);
     config.develop = config.defaultBranch;
-    config.remotes = this.remoteBranches(folder);
-    config.status = this.status(folder);
+    config.remotes = await this.remoteBranches(folder);
+    config.status = await this.status(folder);
 
     const mainBranches = [config.defaultBranch, ...Options.git.mainBranches];
     const remoteMainBranches = config.remotes.filter((value) =>
@@ -120,12 +120,16 @@ export class Git {
       .filter((item) => this.isRepo(item));
   }
 
-  merge(branch: string, folder: string = Deno.cwd()) {
-    Utility.run(Options.git.cmd, `merge ${branch}`.split(" "), folder);
+  async merge(branch: string, folder: string = Deno.cwd()) {
+    await Utility.runAsync(
+      Options.git.cmd,
+      `merge ${branch}`.split(" "),
+      folder
+    );
   }
 
-  mergeFromBranch(branch: string, folder: string = Deno.cwd()) {
-    const info = this.info(folder);
+  async mergeFromBranch(branch: string, folder: string = Deno.cwd()) {
+    const info = await this.info(folder);
     if (!info) return;
 
     this.pull(folder);
@@ -134,27 +138,28 @@ export class Git {
       return;
     }
 
-    this.merge(branch, folder);
+    await this.merge(branch, folder);
   }
 
-  remoteBranches(folder: string = Deno.cwd()): string[] {
-    return Utility.run(
+  async remoteBranches(folder: string = Deno.cwd()): Promise<string[]> {
+    const results = await Utility.runAsync(
       Options.git.cmd,
       'branch -r --list "origin/[^H]*"'.split(" "),
       folder,
       {
         capture: true,
       }
-    )
+    );
+    return results
       .split("\n")
       .map((item) => item.trim().replace("origin/", ""));
   }
 
-  status(folder: string = Deno.cwd()): string[] {
+  async status(folder: string = Deno.cwd()): Promise<string[]> {
     const config = this.config(folder);
     if (!config) return [];
 
-    const results = Utility.run(
+    const results = await Utility.runAsync(
       Options.git.cmd,
       "status -s".split(" "),
       folder,
@@ -166,8 +171,8 @@ export class Git {
     return results.split("\n").map((item) => item.trim());
   }
 
-  pull(folder: string = Deno.cwd()) {
-    Utility.run(Options.git.cmd, "pull".split(" "), folder);
+  async pull(folder: string = Deno.cwd()) {
+    await Utility.runAsync(Options.git.cmd, "pull".split(" "), folder);
   }
 
   private getConfigFile(folder: string = Deno.cwd()) {
