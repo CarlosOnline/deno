@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { Git } from "./git/index.ts";
 import { action } from "./support/index.ts";
 import Utility from "./utility/utility.ts";
@@ -7,8 +8,11 @@ export default class TestCommands {
   static async Run() {
     const repoFolder = "e:/samples/deno2";
 
-    let output = "";
+    let output: any = "";
     const git = new Git();
+
+    output = git.info();
+    console.log("info", output);
 
     output = git.defaultBranch();
     console.log("default", output);

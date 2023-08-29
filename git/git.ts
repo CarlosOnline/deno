@@ -2,10 +2,16 @@ import Options from "../support/options.ts";
 import Utility from "../utility/utility.ts";
 
 export interface Config {
+  branch?: string;
+  defaultBranch?: string;
+  status?: string[];
   url: string;
 }
 
 const DefaultConfig: Config = {
+  branch: "",
+  defaultBranch: "",
+  status: [],
   url: "",
 };
 
@@ -69,6 +75,17 @@ export class Git {
     return headBranchLine.replace("HEAD branch:", "").trim();
   }
 
+  info(folder: string = Deno.cwd()) {
+    const config = this.config(folder);
+    if (!config) return null;
+
+    config.branch = this.branch(folder);
+    config.defaultBranch = this.defaultBranch(folder);
+    config.status = this.status(folder);
+
+    return config;
+  }
+
   isRepo(folder: string = Deno.cwd()): boolean {
     const config = this.config(folder);
     if (!config) return false;
@@ -76,13 +93,15 @@ export class Git {
     return config.url?.length > 0;
   }
 
-  status(folder: string = Deno.cwd()): string {
+  status(folder: string = Deno.cwd()): string[] {
     const config = this.config(folder);
-    if (!config) return "";
+    if (!config) return [];
 
-    return Utility.run(Options.git, "status -s".split(" "), folder, {
+    const results = Utility.run(Options.git, "status -s".split(" "), folder, {
       capture: true,
     });
+
+    return results.split("\n").map((item) => item.trim());
   }
 
   private getConfigFile(folder: string = Deno.cwd()) {
