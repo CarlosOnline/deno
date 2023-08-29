@@ -10,11 +10,11 @@ const DefaultConfig: Config = {
 };
 
 export class Git {
-  async branch(folder: string = Deno.cwd()): Promise<string> {
+  branch(folder: string = Deno.cwd()): string {
     const config = this.config(folder);
     if (!config) return "";
 
-    return await Utility.run(
+    return Utility.run(
       Options.git,
       "rev-parse --abbrev-ref HEAD".split(" "),
       folder,
@@ -46,6 +46,29 @@ export class Git {
     return config;
   }
 
+  defaultBranch(folder: string = Deno.cwd()): string {
+    const config = this.config(folder);
+    if (!config) return "";
+
+    const remoteInfo = Utility.run(
+      Options.git,
+      "remote show origin".split(" "),
+      folder,
+      {
+        capture: true,
+      }
+    );
+
+    const headBranchLine = remoteInfo
+      .split("\n")
+      .find((line) => line.trim().startsWith("HEAD branch:"));
+    if (!headBranchLine) {
+      return "";
+    }
+
+    return headBranchLine.replace("HEAD branch:", "").trim();
+  }
+
   isRepo(folder: string = Deno.cwd()): boolean {
     const config = this.config(folder);
     if (!config) return false;
@@ -53,11 +76,11 @@ export class Git {
     return config.url?.length > 0;
   }
 
-  async status(folder: string = Deno.cwd()): Promise<string> {
+  status(folder: string = Deno.cwd()): string {
     const config = this.config(folder);
     if (!config) return "";
 
-    return await Utility.run(Options.git, "status -s".split(" "), folder, {
+    return Utility.run(Options.git, "status -s".split(" "), folder, {
       capture: true,
     });
   }

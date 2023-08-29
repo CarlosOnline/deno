@@ -1,8 +1,10 @@
-import RestCommands from "./rest/commands.ts";
-import { ActionRunner } from "./support/actions.ts";
 import Options from "./support/options.ts";
+import RestCommands from "./rest/commands.ts";
+import TestCommands from "./test.ts";
+import { ActionRunner } from "./support/actions.ts";
 
 new RestCommands();
+new TestCommands();
 
 if (!Options.args.length) {
   console.error("Missing action");
