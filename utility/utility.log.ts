@@ -14,6 +14,11 @@ export default class Log {
     console.log(cyan(message));
   }
 
+  static highlight(...args: any[]) {
+    const message = args.join(" ");
+    console.log(bold(yellow(message)));
+  }
+
   static warn(...args: any[]) {
     const message = args.join(" ");
     console.log(bold(yellow(message)));
