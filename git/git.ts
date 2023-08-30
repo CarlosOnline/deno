@@ -23,12 +23,16 @@ const DefaultConfig: Config = {
   url: "",
 };
 
+function normalizeBranch(branch: string) {
+  return branch.trim().replace("origin/", "");
+}
+
 export class Git {
   async branch(folder: string = Deno.cwd()): Promise<string> {
     const config = this.config(folder);
     if (!config) return "";
 
-    return await Utility.runAsync(
+    const results = await Utility.runAsync(
       Options.git.cmd,
       "rev-parse --abbrev-ref HEAD".split(" "),
       folder,
@@ -36,6 +40,8 @@ export class Git {
         capture: true,
       }
     );
+
+    return normalizeBranch(results);
   }
 
   async checkout(branch: string, folder: string = Deno.cwd()) {
@@ -84,7 +90,7 @@ export class Git {
       }
     );
 
-    return results.trim().replace("origin/", "");
+    return normalizeBranch(results);
   }
 
   async fetch(folder: string = Deno.cwd()) {
@@ -142,7 +148,7 @@ export class Git {
 
     await this.pull(folder);
 
-    if (info.branch == branch) {
+    if (normalizeBranch(info.branch) == normalizeBranch(branch)) {
       return;
     }
 
@@ -158,9 +164,7 @@ export class Git {
         capture: true,
       }
     );
-    return results
-      .split("\n")
-      .map((item) => item.trim().replace("origin/", ""));
+    return results.split("\n").map((item) => normalizeBranch(item));
   }
 
   async status(folder: string = Deno.cwd()): Promise<string[]> {

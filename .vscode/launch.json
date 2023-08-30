@@ -10,10 +10,11 @@
       "type": "node",
       "program": "${workspaceFolder}/main.ts",
       //"cwd": "${workspaceFolder}",
-      "cwd": "c:\\coti\\rca-db-arkopty",
+      //"cwd": "c:\\coti\\rca-db-arkopty",
+      "cwd": "c:\\coti",
       "runtimeExecutable": "deno.EXE",
       "runtimeArgs": ["run", "--unstable", "--inspect-wait", "--allow-all"],
-      "args": ["git.develop", "develop", "--verbose"],
+      "args": ["git.merge", "--all", "--verbose"],
       "attachSimplePort": 9229
     }
   ]

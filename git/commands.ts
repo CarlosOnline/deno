@@ -10,9 +10,9 @@ export default class GitCommands {
     const folder = Options.folder || Deno.cwd();
 
     if (Options.all) {
-      await GitCommands.getBranchForAllRepos(folder);
+      await GitCommands.forAllRepos(folder, GitCommands.getBranch);
     } else {
-      await GitCommands.getBranchForRepo(folder);
+      await GitCommands.getBranch(folder);
     }
   }
 
@@ -23,6 +23,12 @@ export default class GitCommands {
     const info = await git.info(folder);
     logger.info(folder);
     console.log(info);
+
+    if (Options.all) {
+      await GitCommands.forAllRepos(folder, GitCommands.logInfo);
+    } else {
+      await GitCommands.logInfo(folder);
+    }
   }
 
   @action("git.develop", "Checkout develop")
@@ -30,9 +36,9 @@ export default class GitCommands {
     const folder = Options.folder || Deno.cwd();
 
     if (Options.all) {
-      await GitCommands.checkoutDevelopForAllRepos(folder);
+      await GitCommands.forAllRepos(folder, GitCommands.checkoutDevelop);
     } else {
-      await GitCommands.checkoutDevelopForRepo(folder);
+      await GitCommands.checkoutDevelop(folder);
     }
   }
 
@@ -41,7 +47,7 @@ export default class GitCommands {
     const folder = Options.folder || Deno.cwd();
 
     if (Options.all) {
-      await GitCommands.mergeFromDevelopBranchForAllRepos(folder);
+      await GitCommands.forAllRepos(folder, GitCommands.mergeFromDevelopBranch);
     } else {
       await GitCommands.mergeFromDevelopBranch(folder);
     }
@@ -52,7 +58,18 @@ export default class GitCommands {
     return git.listRepos(folder);
   }
 
-  private static async checkoutDevelopForRepo(folder: string) {
+  private static async forAllRepos(
+    folder: string,
+    action: (folder: string) => Promise<void>
+  ) {
+    const repos = GitCommands.getAllRepos(folder);
+
+    const tasks = repos.map((folder) => action(folder));
+
+    await Promise.all(tasks);
+  }
+
+  private static async checkoutDevelop(folder: string) {
     logger.highlight(`Checkout develop ${folder}`);
 
     const git = new Git();
@@ -68,16 +85,6 @@ export default class GitCommands {
     await git.pull(folder);
 
     logger.highlight(`Checked out ${branch} ${folder}`);
-  }
-
-  private static async checkoutDevelopForAllRepos(folder: string) {
-    const repos = GitCommands.getAllRepos(folder);
-
-    const tasks = repos.map((folder) =>
-      GitCommands.checkoutDevelopForRepo(folder)
-    );
-
-    await Promise.all(tasks);
   }
 
   private static async mergeFromDevelopBranch(folder: string) {
@@ -102,27 +109,16 @@ export default class GitCommands {
     logger.highlight(`Merged ${folder}`);
   }
 
-  private static async mergeFromDevelopBranchForAllRepos(folder: string) {
-    const repos = GitCommands.getAllRepos(folder);
-
-    const tasks = repos.map((folder) =>
-      GitCommands.mergeFromDevelopBranch(folder)
-    );
-
-    await Promise.all(tasks);
-  }
-
-  private static async getBranchForRepo(folder: string) {
+  private static async getBranch(folder: string) {
     const git = new Git();
     const branch = await git.branch(folder);
     logger.highlight(`Branch ${branch} ${folder}`);
   }
 
-  private static async getBranchForAllRepos(folder: string) {
-    const repos = GitCommands.getAllRepos(folder);
-
-    const tasks = repos.map((folder) => GitCommands.getBranchForRepo(folder));
-
-    await Promise.all(tasks);
+  private static async logInfo(folder: string) {
+    const git = new Git();
+    const info = await git.info(folder);
+    logger.info(folder);
+    console.log(info);
   }
 }

@@ -13,20 +13,10 @@ export default class TestCommands {
     let output: any = "";
     const git = new Git();
 
-    TestCommands.mergeFromDevelop(repoFolder3);
+    await TestCommands.mergeFromDevelop(repoFolder3);
 
     const repos = git.listRepos("e:/samples");
     //console.log("repos", repos);
-
-    repos.slice(0, 2).forEach((folder) => {
-      const info = git.info(folder);
-      if (!info) {
-        return;
-      }
-
-      if (info.remotes.length <= 1) return;
-      console.log("info", folder, info.remotes);
-    });
 
     await console.log("done");
     await Deno.exit();
@@ -60,9 +50,9 @@ export default class TestCommands {
     console.log(git.config("e:/dev/deno"));
   }
 
-  private static mergeFromDevelop(folder: string) {
+  private static async mergeFromDevelop(folder: string) {
     const git = new Git();
-    const info = git.info(folder);
+    const info = await git.info(folder);
     if (!info) return;
     //console.log(info);
 
