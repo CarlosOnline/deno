@@ -9,24 +9,18 @@ import { Git } from "./index.ts";
 type GitActionCallback = (...args: any[]) => Promise<any>;
 
 export default class GitCommands {
-  @action("git.branch", "Get branch")
+  @action("git.branch", "Get/Create branch")
   async getBranch() {
-    await GitCommands.runGitCommand(GitCommands.getBranch);
+    if (!Options.args.length) {
+      await GitCommands.runGitCommand(GitCommands.getBranch);
+    } else {
+      await GitCommands.runGitCommand(GitCommands.createBranch);
+    }
   }
 
   @action("git.info", "Get git info")
   async info() {
-    const folder = Options.folder || Deno.cwd();
-    const git = new Git();
-    const info = await git.info(folder);
-    logger.info(folder);
-    console.log(info);
-
-    if (Options.all) {
-      await GitCommands.forAllRepos(folder, GitCommands.logInfo);
-    } else {
-      await GitCommands.logInfo(folder);
-    }
+    await GitCommands.runGitCommand(GitCommands.logInfo);
   }
 
   @action("git.develop", "Checkout develop")
@@ -72,6 +66,29 @@ export default class GitCommands {
     await Promise.all(tasks);
   }
 
+  private static async checkoutBranch(folder: string) {
+    const branch = Options.branch || Options.args[1];
+    if (!branch) {
+      logger.error(`Missing branch name for ${folder}`);
+      return;
+    }
+
+    logger.highlight(`Checkout ${branch} ${folder}`);
+
+    const git = new Git();
+    const config = git.config(folder);
+    if (!config) {
+      logger.error(`Not a git repository for ${folder}`);
+      return;
+    }
+
+    await git.checkout(branch, folder);
+
+    await git.pull(folder);
+
+    logger.highlight(`Checked out ${branch} ${folder}`);
+  }
+
   private static async checkoutDevelop(folder: string) {
     logger.highlight(`Checkout develop ${folder}`);
 
@@ -88,6 +105,31 @@ export default class GitCommands {
     await git.pull(folder);
 
     logger.highlight(`Checked out ${branch} ${folder}`);
+  }
+
+  private static async createBranch(folder: string) {
+    const branch = Options.branch || Options.args[1];
+    if (!branch) {
+      logger.error(`Missing branch name for ${folder}`);
+      return;
+    }
+
+    const git = new Git();
+    const info = await git.info(folder);
+    if (!info) {
+      logger.error(`Not a git repository for ${folder}`);
+      return;
+    }
+
+    if (info.remotes.includes(branch) || info.locals.includes(branch)) {
+      await git.checkout(branch, folder);
+      logger.info(`Checked out ${branch} for ${folder}`);
+      return;
+    }
+
+    await git.createBranch(branch, info.develop, folder);
+
+    logger.highlight(`Branch ${branch} ${folder}`);
   }
 
   private static async mergeFromDevelopBranch(folder: string) {
@@ -129,8 +171,8 @@ export default class GitCommands {
     logger.highlight(`pull ${folder}`);
 
     const git = new Git();
-    const info = await git.info(folder);
-    if (!info) {
+    const config = git.config(folder);
+    if (!config) {
       logger.error(`Not a git repository for ${folder}`);
       return;
     }
@@ -144,8 +186,8 @@ export default class GitCommands {
     logger.highlight(`status ${folder}`);
 
     const git = new Git();
-    const info = await git.info(folder);
-    if (!info) {
+    const config = git.config(folder);
+    if (!config) {
       logger.error(`Not a git repository for ${folder}`);
       return;
     }

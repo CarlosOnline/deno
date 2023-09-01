@@ -2,6 +2,7 @@
 import { dirname } from "https://deno.land/std/path/mod.ts";
 
 export class DefaultOptions {
+  [index: string]: any;
   // Environment file to load.
   env = "";
   scriptFolder = "";
@@ -13,6 +14,8 @@ export class DefaultOptions {
     develop: "develop",
   };
 }
+
+type OptionsType = DefaultOptions | Record<string, any>;
 
 class OptionsParser {
   public initializeOptions() {
@@ -83,7 +86,7 @@ class OptionsParser {
   }
 }
 
-const Options: Record<string, any> = <any>new DefaultOptions();
+const Options: OptionsType = <any>new DefaultOptions();
 const parser = new OptionsParser();
 parser.initializeOptions();
 
