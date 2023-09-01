@@ -183,6 +183,13 @@ export class Git {
     return results.split("\n").map((item) => item.trim());
   }
 
+  async statusLog(folder: string = Deno.cwd()) {
+    const config = this.config(folder);
+    if (!config) return [];
+
+    await Utility.runAsync(Options.git.cmd, "status -s".split(" "), folder);
+  }
+
   async pull(folder: string = Deno.cwd()) {
     await Utility.runAsync(Options.git.cmd, "pull".split(" "), folder);
   }

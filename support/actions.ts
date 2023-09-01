@@ -1,6 +1,6 @@
 import { logger } from "../utility/index.ts";
 
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any no-explicit-any
 export interface Action {
   names: string[];
   description: string;
