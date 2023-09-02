@@ -33,6 +33,11 @@ export default class GitCommands {
     await GitCommands.runGitCommand(GitCommands.mergeFromDevelopBranch);
   }
 
+  @action("git.prune", "Prune repositories")
+  async prune() {
+    await GitCommands.runGitCommand(GitCommands.pruneRepo);
+  }
+
   @action("git.pull", "Pull repositories")
   async pull() {
     await GitCommands.runGitCommand(GitCommands.pullRepo);
@@ -165,6 +170,21 @@ export default class GitCommands {
     const info = await git.info(folder);
     logger.info(folder);
     console.log(info);
+  }
+
+  private static async pruneRepo(folder: string) {
+    logger.highlight(`prune ${folder}`);
+
+    const git = new Git();
+    const config = git.config(folder);
+    if (!config) {
+      logger.error(`Not a git repository for ${folder}`);
+      return;
+    }
+
+    await git.prune(folder);
+
+    logger.highlight(`Pruned ${folder}`);
   }
 
   private static async pullRepo(folder: string) {

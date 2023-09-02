@@ -250,6 +250,17 @@ export class Git {
     await Utility.runAsync(Options.git.cmd, "status -s".split(" "), folder);
   }
 
+  async prune(folder: string = Deno.cwd()): Promise<void> {
+    const config = this.config(folder);
+    if (!config) return;
+
+    await Utility.runAsync(
+      Options.git.cmd,
+      "remote prune origin".split(" "),
+      folder
+    );
+  }
+
   async pull(folder: string = Deno.cwd()) {
     await Utility.runAsync(Options.git.cmd, "pull".split(" "), folder);
 
@@ -277,17 +288,6 @@ export class Git {
     if (!config) return false;
 
     return config.url?.length > 0;
-  }
-
-  private async prune(folder: string): Promise<void> {
-    const config = this.config(folder);
-    if (!config) return;
-
-    await Utility.runAsync(
-      Options.git.cmd,
-      "remote prune origin".split(" "),
-      folder
-    );
   }
 
   private async updateRemote(folder: string): Promise<void> {
