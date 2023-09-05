@@ -3,7 +3,6 @@
 import { action } from "../support/index.ts";
 import Options from "../support/options.ts";
 import { logger } from "../utility/index.ts";
-import Utility from "../utility/utility.ts";
 import { Git } from "./index.ts";
 
 type GitActionCallback = (...args: any[]) => Promise<any>;
@@ -128,8 +127,18 @@ export default class GitCommands {
 
     if (info.remotes.includes(branch) || info.locals.includes(branch)) {
       await git.checkout(branch, folder);
+
+      if (Options.pull) {
+        await git.pull(folder);
+      }
+
       logger.info(`Checked out ${branch} for ${folder}`);
       return;
+    }
+
+    if (Options.pull) {
+      await git.checkout(info.develop, folder);
+      await git.pull(folder);
     }
 
     await git.createBranch(branch, info.develop, folder);
@@ -148,11 +157,7 @@ export default class GitCommands {
     }
 
     if (Options.reset) {
-      await Utility.runAsync(
-        Options.git.cmd,
-        "reset --hard".split(" "),
-        folder
-      );
+      await git.reset();
     }
 
     await git.mergeFromBranch(`origin/${info.develop}`, folder);

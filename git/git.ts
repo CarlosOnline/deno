@@ -105,6 +105,8 @@ export class Git {
       folder
     );
 
+    await this.checkout(branch, folder);
+
     await this.updateRemote(folder);
   }
 
@@ -225,6 +227,10 @@ export class Git {
     );
 
     return results.split("\n").map((item) => item.trim());
+  }
+
+  async reset(folder: string = Deno.cwd()) {
+    await Utility.runAsync(Options.git.cmd, "reset --hard".split(" "), folder);
   }
 
   async status(folder: string = Deno.cwd()): Promise<string[]> {
