@@ -10,7 +10,7 @@ type GitActionCallback = (...args: any[]) => Promise<any>;
 export default class GitCommands {
   @action("git.branch", "Get/Create branch")
   async getBranch() {
-    if (!Options.args.length) {
+    if (Options.args.length == 1) {
       await GitCommands.runGitCommand(GitCommands.getBranch);
     } else {
       await GitCommands.runGitCommand(GitCommands.createBranch);
