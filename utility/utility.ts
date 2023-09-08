@@ -1,3 +1,5 @@
+import { OpenOptions, open } from "https://deno.land/x/open/index.ts";
+
 import Options from "../support/options.ts";
 import File from "./utility.file.ts";
 import Log, { logger } from "./utility.log.ts";
@@ -27,6 +29,10 @@ export default class Utility {
   static file = File;
   static log = Log;
   static path = Path;
+
+  static async openUrl(url: string, options?: OpenOptions) {
+    await open(url, options);
+  }
 
   static run(
     cmd: string,

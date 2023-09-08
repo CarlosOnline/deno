@@ -13,6 +13,7 @@ export class DefaultOptions {
     mainBranches: ["main", "master", "develop"],
     develop: "develop",
   };
+  chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 }
 
 type OptionsType = DefaultOptions | Record<string, any>;

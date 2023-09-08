@@ -3,11 +3,17 @@
 import { action } from "../support/index.ts";
 import Options from "../support/options.ts";
 import { logger } from "../utility/index.ts";
+import Utility from "../utility/utility.ts";
 import { Git } from "./index.ts";
 
 type GitActionCallback = (...args: any[]) => Promise<any>;
 
 export default class GitCommands {
+  @action("create_pr", "Create pull request")
+  async createPullRequest() {
+    await GitCommands.runGitCommand(GitCommands.createPullRequest);
+  }
+
   @action("git.branch", "Get/Create branch")
   async getBranch() {
     if (Options.args.length == 1) {
@@ -144,6 +150,29 @@ export default class GitCommands {
     await git.createBranch(branch, info.develop, folder);
 
     logger.highlight(`Branch ${branch} ${folder}`);
+  }
+
+  private static async createPullRequest(folder: string) {
+    const git = new Git();
+    const info = await git.info(folder);
+    if (!info) {
+      logger.error(`Not a git repository for ${folder}`);
+      return;
+    }
+
+    if (info.branch == info.develop || info.branch == info.defaultBranch) {
+      logger.warn(`${folder} already in target branch: ${info.branch}`);
+      return;
+    }
+
+    const url = `https://bitbucket.cotiviti.com/projects/RCA/repos/${info.repo}/pull-requests?create&sourceBranch=refs/heads/${info.branch}&targetBranch=${info.develop}`;
+    console.log(url);
+
+    if (!Options.test) {
+      Utility.runAsync(Options.chrome, [url], folder, { skipEscape: true });
+    }
+
+    logger.highlight(`Create PR ${info.branch} ${folder}`);
   }
 
   private static async mergeFromDevelopBranch(folder: string) {

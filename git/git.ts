@@ -10,6 +10,7 @@ export interface Config {
   isMainBranch: boolean;
   remotes: string[];
   locals: string[];
+  repo: string;
   status: string[];
   url: string;
 }
@@ -21,6 +22,7 @@ const DefaultConfig: Config = {
   folder: "",
   isMainBranch: false,
   remotes: [],
+  repo: "",
   locals: [],
   status: [],
   url: "",
@@ -49,6 +51,11 @@ export class Git {
         config.url = lineItem.replace("url = ", "").trim();
       }
     });
+
+    if (config.url) {
+      const parts = config.url.split("/");
+      config.repo = parts[parts.length - 1].replace(".git", "");
+    }
 
     return config;
   }
