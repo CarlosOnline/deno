@@ -4,9 +4,11 @@ import RestCommands from "./rest/commands.ts";
 import TestCommands from "./test.ts";
 import { ActionRunner } from "./support/actions.ts";
 import VisualStudioCommands from "./vs/commands.ts";
+import SystemCommands from "./system/commands.ts";
 
 new GitCommands();
 new RestCommands();
+new SystemCommands();
 new TestCommands();
 new VisualStudioCommands();
 
