@@ -14,6 +14,12 @@ export class DefaultOptions {
     develop: "develop",
   };
   chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+  sqlcmd =
+    '"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\SQLCMD.EXE"';
+  sql = {
+    server: "Default Server",
+    database: "Default Database",
+  };
 }
 
 type OptionsType = DefaultOptions | Record<string, any>;

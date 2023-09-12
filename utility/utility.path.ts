@@ -11,6 +11,10 @@ export default class Path {
     return basename(filePath);
   }
 
+  static dirname(filePath: string) {
+    return dirname(filePath);
+  }
+
   static exists(filePath: string) {
     return existsSync(filePath);
   }

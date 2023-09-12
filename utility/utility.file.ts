@@ -1,4 +1,33 @@
+import { logger } from "./utility.log.ts";
+
 export default class File {
+  static exists(filePath: string) {
+    try {
+      Deno.statSync(filePath);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  static fileExists(filePath: string) {
+    try {
+      const results = Deno.statSync(filePath);
+      return results.isFile;
+    } catch {
+      return false;
+    }
+  }
+
+  static directoryExists(filePath: string) {
+    try {
+      const results = Deno.statSync(filePath);
+      return results.isDirectory;
+    } catch {
+      return false;
+    }
+  }
+
   static listDirectories(folder: string, recursive = false) {
     const results: string[] = [];
 

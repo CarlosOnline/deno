@@ -14,7 +14,7 @@
       "cwd": "c:\\coti",
       "runtimeExecutable": "deno.EXE",
       "runtimeArgs": ["run", "--unstable", "--inspect-wait", "--allow-all"],
-      "args": ["git.merge", "--all", "--verbose"],
+      "args": ["sql.recreate", "C:\\Temp\\SQL\\recreate.opty.txt", "--verbose"],
       "attachSimplePort": 9229
     }
   ]

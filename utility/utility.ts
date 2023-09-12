@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { OpenOptions, open } from "https://deno.land/x/open/index.ts";
 import * as clipboard from "https://deno.land/x/copy_paste@v1.1.3/mod.ts";
+import { sleep } from "https://deno.land/x/sleep/mod.ts";
 
 import Options from "../support/options.ts";
 import File from "./utility.file.ts";
@@ -31,6 +32,26 @@ export default class Utility {
   static file = File;
   static log = Log;
   static path = Path;
+
+  static async forEachParallel<T>(
+    values: T[],
+    func: (item: any) => Promise<any>
+  ): Promise<any> {
+    return await Promise.all(values.map(async (item: any) => await func(item)));
+  }
+
+  static async forEachSequential<T>(
+    values: T[],
+    func: (item: any) => Promise<any>
+  ): Promise<void> {
+    for (const item of values) {
+      await func(item);
+    }
+  }
+
+  static async sleep(seconds: number) {
+    await sleep(seconds);
+  }
 
   static async copyTextToClipboard(value: string) {
     await clipboard.writeText(value);
@@ -73,7 +94,7 @@ export default class Utility {
     runOptions: RunOptions = DefaultRunOptions
   ): Promise<string> {
     if (runOptions.verbose || Options.verbose) {
-      const exe = Utility.path.basename(cmd);
+      const exe = Utility.path.basename(cmd.replaceAll('"', ""));
       logger.info(`${exe} ${args.join(" ")}`);
     }
 
