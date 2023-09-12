@@ -1,6 +1,7 @@
 import { action } from "../support/index.ts";
 import Options from "../support/options.ts";
 import { logger } from "../utility/index.ts";
+import Utility from "../utility/utility.ts";
 
 export default class RestCommands {
   @action("token", "Get authorization token")
@@ -31,6 +32,8 @@ export default class RestCommands {
     const body = await resp.json();
     const token = body.access_token;
     logger.info(token);
+
+    await Utility.copyTextToClipboard(token);
 
     if (Options.token.outputFilePath) {
       const encoder = new TextEncoder();

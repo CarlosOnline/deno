@@ -1,4 +1,6 @@
+// deno-lint-ignore-file no-explicit-any
 import { OpenOptions, open } from "https://deno.land/x/open/index.ts";
+import * as clipboard from "https://deno.land/x/copy_paste@v1.1.3/mod.ts";
 
 import Options from "../support/options.ts";
 import File from "./utility.file.ts";
@@ -29,6 +31,14 @@ export default class Utility {
   static file = File;
   static log = Log;
   static path = Path;
+
+  static async copyTextToClipboard(value: string) {
+    await clipboard.writeText(value);
+  }
+
+  static async copyToClipboard(value: any) {
+    await clipboard.write(value);
+  }
 
   static async openUrl(url: string, options?: OpenOptions) {
     await open(url, options);
