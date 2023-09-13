@@ -7,7 +7,9 @@ import Utility from "../utility/utility.ts";
 import { Sql } from "./sql.ts";
 
 export default class SqlCommands {
-  @action("sql.recreate", "Recreate sql sprocs / views etc")
+  @action("sql.recreate", "Recreate sql sprocs / views etc", [
+    "sql.recreate C:\\Temp\\SQL\\recreate.ref.txt --server USNDCCHSQLD06.ccaintranet.com\\DEV01 --database ARKRef",
+  ])
   async recreateSqlObjects() {
     if (!Options.file && Options.args.length < 2) {
       logger.fatal("Missing file to be processed");

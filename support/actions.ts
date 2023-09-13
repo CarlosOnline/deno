@@ -75,7 +75,7 @@ export class ActionRunner {
           )}`
         );
         if (action.examples.length) {
-          action.examples.forEach((item) => logger.info(item));
+          action.examples.forEach((item) => logger.info(" ".padEnd(5) + item));
         }
       });
     });
