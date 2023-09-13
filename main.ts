@@ -6,6 +6,7 @@ import { ActionRunner } from "./support/actions.ts";
 import VisualStudioCommands from "./vs/commands.ts";
 import SystemCommands from "./system/commands.ts";
 import SqlCommands from "./sql/commands.ts";
+import { logger } from "./utility/index.ts";
 
 new GitCommands();
 new RestCommands();
@@ -15,7 +16,8 @@ new TestCommands();
 new VisualStudioCommands();
 
 if (!Options.args.length) {
-  console.error("Missing action");
+  logger.error("Missing action");
+  ActionRunner.usage();
   Deno.exit(1);
 }
 

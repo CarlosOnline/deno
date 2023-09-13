@@ -37,11 +37,47 @@ export class ActionRunner {
     });
 
     if (!action) {
-      console.error(`Missing action ${name}`);
+      logger.error(`Missing action ${name}`);
+      ActionRunner.usage();
       return;
     }
 
     logger.info(`Running ${name}`);
     await action.target();
+  }
+
+  public static usage() {
+    const maxNameLength =
+      1 +
+      Math.max.apply(
+        Math,
+        Actions.map((item) =>
+          Math.max.apply(
+            Math,
+            item.names.map((name) => name.length)
+          )
+        )
+      );
+
+    const maxDescriptionLength =
+      1 +
+      Math.max.apply(
+        Math,
+        Actions.map((item) => item.description.length)
+      );
+
+    Actions.forEach((action) => {
+      const names = action.names;
+      names.forEach((name) => {
+        logger.info(
+          `${name.padEnd(maxNameLength)} ${action.description.padEnd(
+            maxDescriptionLength
+          )}`
+        );
+        if (action.examples.length) {
+          action.examples.forEach((item) => logger.info(item));
+        }
+      });
+    });
   }
 }
