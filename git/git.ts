@@ -282,6 +282,11 @@ export class Git {
     }
   }
 
+  async undo(folder: string = Deno.cwd()) {
+    await Utility.runAsync(Options.git.cmd, "checkout -- .".split(" "), folder);
+    await Utility.runAsync(Options.git.cmd, "clean -fd".split(" "), folder);
+  }
+
   private getConfigFile(folder: string) {
     try {
       const configFilePath = `${folder}/.git/config`;

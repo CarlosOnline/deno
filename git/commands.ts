@@ -8,6 +8,12 @@ import { Git } from "./index.ts";
 
 type GitActionCallback = (...args: any[]) => Promise<any>;
 
+type GitUndoChanges = {
+  repo: string;
+  folder: string;
+  status: string[];
+};
+
 export default class GitCommands {
   @action("create_pr", "Create pull request")
   async createPullRequest() {
@@ -53,6 +59,38 @@ export default class GitCommands {
     await GitCommands.runGitCommand(GitCommands.statusOfRepo);
   }
 
+  @action("git.undo", "Undo repositories")
+  async undo() {
+    const undoChanges = <GitUndoChanges[]>(
+      await GitCommands.runGitCommand(GitCommands.getUndoChangesForRepo)
+    );
+
+    const pendingChanges = undoChanges.filter((item) => item.status.length > 0);
+    if (pendingChanges.length == 0) {
+      logger.warn("No changes to undo");
+      return;
+    }
+
+    Utility.forEachSequential(pendingChanges, async (item) => {
+      await undo(item);
+    });
+
+    async function undo(changedRepo: GitUndoChanges) {
+      logger.warn(
+        `Undo ${changedRepo.status.length} changes in ${changedRepo.repo} in ${changedRepo.folder}`
+      );
+      changedRepo.status.forEach((status) => logger.info(status));
+      logger.info("----");
+
+      const proceed = confirm(`Undo changes?`);
+      if (proceed) {
+        const git = new Git();
+        git.undo(changedRepo.folder);
+        await git.statusLog(changedRepo.folder);
+      }
+    }
+  }
+
   private static getAllRepos(folder: string) {
     const git = new Git();
     return git.listRepos(folder);
@@ -62,9 +100,9 @@ export default class GitCommands {
     const folder = Options.folder || Deno.cwd();
 
     if (Options.all) {
-      await GitCommands.forAllRepos(folder, action);
+      return await GitCommands.forAllRepos(folder, action);
     } else {
-      await action(folder);
+      return await action(folder);
     }
   }
 
@@ -73,7 +111,7 @@ export default class GitCommands {
 
     const tasks = repos.map((folder) => action(folder));
 
-    await Promise.all(tasks);
+    return await Promise.all(tasks);
   }
 
   private static async checkoutBranch(folder: string) {
@@ -249,5 +287,22 @@ export default class GitCommands {
     await git.statusLog(folder);
 
     logger.highlight(`Statused ${folder}`);
+  }
+
+  private static async getUndoChangesForRepo(folder: string) {
+    const git = new Git();
+    const config = git.config(folder);
+    if (!config) {
+      logger.error(`Not a git repository for ${folder}`);
+      return;
+    }
+
+    const status = await git.status(folder);
+
+    return <GitUndoChanges>{
+      repo: config.repo,
+      folder: folder,
+      status: status.filter((item) => item.trim()),
+    };
   }
 }
