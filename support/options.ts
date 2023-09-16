@@ -1,7 +1,11 @@
 // deno-lint-ignore-file no-explicit-any
 import { dirname } from "https://deno.land/std/path/mod.ts";
+import {
+  VisualStudioOptions,
+  VisualStudioOptionsBuilder,
+} from "./options.vs.ts";
 
-export class DefaultOptions {
+export class DefaultOptions extends VisualStudioOptions {
   [index: string]: any;
   // Environment file to load.
   env = "";
@@ -28,6 +32,7 @@ type OptionsType = DefaultOptions | Record<string, any>;
 class OptionsParser {
   public initializeOptions() {
     this.initializeScriptFolder();
+    this.initializeVisualStudio();
     this.parseArgs(Deno.args);
     this.loadEnvironmentData(Options.env);
   }
@@ -35,6 +40,12 @@ class OptionsParser {
   private initializeScriptFolder() {
     const filePath = Deno.mainModule.replace("file:///", "");
     Options.scriptFolder = dirname(filePath);
+  }
+
+  private initializeVisualStudio() {
+    const vs = new VisualStudioOptionsBuilder();
+    const options = vs.getOptions();
+    Object.assign(Options, options);
   }
 
   private loadEnvironmentData(env: string) {

@@ -46,7 +46,6 @@ export default class TestCommands {
     output = git.branch();
     console.log("branch", output);
 
-    git.isRepo("e:/dev/deno");
     console.log(git.config("e:/dev/deno"));
   }
 
