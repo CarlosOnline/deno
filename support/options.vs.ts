@@ -1,7 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { dirname } from "https://deno.land/std/path/mod.ts";
-
-import Utility from "../utility/utility.ts";
+import { logger } from "../utility/utility.log.ts";
 
 /*
 Typical found paths:
@@ -9,17 +8,22 @@ C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Current
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\amd64\MSBuild.exe
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools\VsDevCmd.bat
 */
-const searchFolders = [
-  "{drive}\\{programFiles}\\Microsoft Visual Studio\\{year}\\{flavor}\\Common{version}\\IDE",
-  "{drive}\\{programFiles}\\Microsoft Visual Studio\\{year}\\{flavor}\\Common{version}\\Tools",
+const visualStudioFolders = [
+  "{drive}\\{programFiles}\\Microsoft Visual Studio\\{year}\\{flavor}\\Common7\\IDE",
+  "{drive}\\{programFiles}\\Microsoft Visual Studio\\{year}\\{flavor}\\Common7\\Tools",
   "{drive}\\{programFiles}\\Microsoft Visual Studio\\{year}\\{flavor}\\MSBuild\\Current\\Bin",
-  "{drive}\\{programFiles}\\Microsoft Visual Studio\\{year}\\{flavor}\\MSBuild\\{version}.0\\Bin",
+  "{drive}\\{programFiles}\\Microsoft Visual Studio\\{year}\\{flavor}\\MSBuild\\7.0\\Bin",
 ];
 
-const flavors = ["Community", "Professional", "Enterprise"];
-const programFilesFolders = ["Program Files", "Program Files (x86)"];
 const drives = ["C:", "D:", "E:"];
+const programFilesFolders = ["Program Files", "Program Files (x86)"];
 const files = ["msbuild.exe", "devenv.com", "VsMSBuildCmd.bat", "VsDevCmd.bat"];
+const flavors = ["Community", "Professional", "Enterprise"];
+const startYear = new Date().getFullYear();
+const years = Array.from(
+  { length: startYear - 2010 },
+  (item, index) => startYear - index
+);
 
 export class VisualStudioOptions {
   [index: string]: any;
@@ -29,17 +33,18 @@ export class VisualStudioOptions {
   vsdevcmd = "";
 }
 
-type SearchData = {
+const DefaultVisualStudioOptions = {
+  msbuild: "",
+  devenv: "",
+  vsmsbuildcmd: "",
+  vsdevcmd: "",
+};
+
+type VisualStudioData = {
   drive: string;
   programFiles: string;
   year: number;
   flavor: string;
-  version: number;
-};
-
-type FindResults = {
-  filePath: string;
-  search: SearchData;
 };
 
 function fileExists(filePath: string) {
@@ -62,42 +67,99 @@ function directoryExists(filePath: string) {
 
 export class VisualStudioOptionsBuilder {
   getOptions() {
-    const foundOptions = this.loadOptions();
-    if (foundOptions) {
-      return foundOptions;
+    let options = this.loadOptions();
+    if (options) {
+      return options;
     }
 
-    const options = new VisualStudioOptions();
-    this.findFiles(options);
+    const vsData = this.findVisualStudioFolder();
+    if (!vsData) {
+      logger.error("Failed to find Visual Studio folder");
+      return Object.assign({}, DefaultVisualStudioOptions);
+    }
+
+    options = this.locateVisualStudioFiles(vsData);
+
+    this.saveOptions(options);
     return options;
   }
 
-  private findFiles(options: VisualStudioOptions) {
-    let searchData: SearchData | null = null;
-    let found: FindResults | null = null;
+  private locateVisualStudioFiles(vsData: VisualStudioData) {
+    const options = new VisualStudioOptions();
 
     files.forEach((fileName) => {
       const key = fileName.split(".")[0];
 
-      // Try finding with previously found data
-      if (searchData) {
-        found = this.searchInFolders(fileName, searchData);
-      }
+      for (let idx = 0; idx < visualStudioFolders.length; idx++) {
+        const folder = visualStudioFolders[idx]
+          .replace("{drive}", vsData.drive)
+          .replace("{programFiles}", vsData.programFiles)
+          .replace("{year}", vsData.year.toString())
+          .replace("{flavor}", vsData.flavor);
 
-      if (!found) {
-        // Search all years, versions, drives etc
-        found = this.findFile(fileName);
-      }
+        const filePath = `${folder}\\${fileName}`;
 
-      if (found?.search) {
-        searchData = found.search;
+        if (fileExists(filePath)) {
+          options[key.toLocaleLowerCase()] = filePath;
+          break;
+        }
       }
-
-      options[key.toLocaleLowerCase()] = found?.filePath;
     });
 
-    this.saveOptions(options);
+    return options;
   }
+
+  private findVisualStudioFolder() {
+    const folders = this.getVisualStudioFolders();
+
+    const searchFolder = visualStudioFolders[0];
+    while (true) {
+      const vsData = <VisualStudioData>folders.next().value;
+      if (!vsData) {
+        return null;
+      }
+
+      const folder = searchFolder
+        .replace("{drive}", vsData.drive)
+        .replace("{programFiles}", vsData.programFiles)
+        .replace("{year}", vsData.year.toString())
+        .replace("{flavor}", vsData.flavor);
+
+      if (directoryExists(folder)) {
+        return vsData;
+      }
+    }
+  }
+
+  private getVisualStudioFolders = function* (): Generator<VisualStudioData> {
+    for (let idx = 0; idx < drives.length; idx++) {
+      const drive = drives[idx];
+      {
+        for (let idx = 0; idx < programFilesFolders.length; idx++) {
+          const programFiles = programFilesFolders[idx];
+
+          {
+            for (let idx = 0; idx < years.length; idx++) {
+              const year = years[idx];
+
+              {
+                for (let idx = 0; idx < flavors.length; idx++) {
+                  const flavor = flavors[idx];
+
+                  yield {
+                    drive: drive,
+                    programFiles: programFiles,
+                    year: year,
+                    flavor: flavor,
+                  };
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  };
 
   private loadOptions() {
     const scriptFolder = dirname(Deno.mainModule.replace("file:///", ""));
@@ -134,74 +196,5 @@ export class VisualStudioOptionsBuilder {
 
       Deno.writeFileSync(filePath, data);
     }
-  }
-
-  private searchInFolders(fileName: string, searchData: SearchData) {
-    for (let idx = 0; idx < searchFolders.length; idx++) {
-      const folder = searchFolders[idx];
-      const found = this.searchInFolder(fileName, folder, searchData);
-      if (found) {
-        return found;
-      }
-    }
-
-    return null;
-  }
-
-  private searchInFolder(
-    fileName: string,
-    searchFolder: string,
-    searchData: SearchData
-  ) {
-    const folder = searchFolder
-      .replace("{drive}", searchData.drive)
-      .replace("{programFiles}", searchData.programFiles)
-      .replace("{year}", searchData.year.toString())
-      .replace("{flavor}", searchData.flavor)
-      .replace("{version}", searchData.version.toString());
-
-    const filePath = `${folder}\\${fileName}`;
-
-    return !fileExists(filePath)
-      ? null
-      : {
-          filePath: filePath,
-          search: searchData,
-        };
-  }
-
-  private findFile(fileName: string) {
-    for (let idxDrive = 0; idxDrive < fileName.length; idxDrive++) {
-      const drive = drives[idxDrive];
-      for (
-        let idxProgramFiles = 0;
-        idxProgramFiles < programFilesFolders.length;
-        idxProgramFiles++
-      ) {
-        const programFiles = programFilesFolders[idxProgramFiles];
-        const startYear = new Date().getFullYear();
-        for (let year = startYear; year >= 2010; year--) {
-          for (let version = 7; version <= 7; version++) {
-            // Only version 7 is supported
-            for (let idxFlavor = 0; idxFlavor < flavors.length; idxFlavor++) {
-              const flavor = flavors[idxFlavor];
-              const search: SearchData = {
-                drive: drive,
-                programFiles: programFiles,
-                year: year,
-                flavor: flavor,
-                version: version,
-              };
-
-              const found = this.searchInFolders(fileName, search);
-              if (found) {
-                return found;
-              }
-            }
-          }
-        }
-      }
-    }
-    return null;
   }
 }
