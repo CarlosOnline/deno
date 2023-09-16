@@ -1,5 +1,3 @@
-import { logger } from "./utility.log.ts";
-
 export default class File {
   static exists(filePath: string) {
     try {

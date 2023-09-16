@@ -56,7 +56,7 @@ export default class TestCommands {
     if (!info) return;
     //console.log(info);
 
-    Utility.run(Options.git.cmd, "reset --hard".split(" "), folder);
+    Utility.run.run(Options.git.cmd, "reset --hard".split(" "), folder);
 
     git.mergeFromBranch(info.develop, folder);
   }

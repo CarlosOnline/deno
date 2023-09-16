@@ -1,6 +1,6 @@
 import GitCommands from "./git/commands.ts";
 import Options from "./support/options.ts";
-import RestCommands from "./rest/commands.ts";
+import DevCommands from "./dev/commands.ts";
 import TestCommands from "./test.ts";
 import { ActionRunner } from "./support/actions.ts";
 import VisualStudioCommands from "./vs/commands.ts";
@@ -9,7 +9,7 @@ import SqlCommands from "./sql/commands.ts";
 import { logger } from "./utility/index.ts";
 
 new GitCommands();
-new RestCommands();
+new DevCommands();
 new SqlCommands();
 new SystemCommands();
 new TestCommands();

@@ -7,13 +7,14 @@ export class DefaultOptions {
   env = "";
   scriptFolder = "";
   args: string[] = [];
+  chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
   cwdBackup = Deno.cwd();
   git = {
     cmd: "C:/Program Files/Git/cmd/git.exe",
     mainBranches: ["main", "master", "develop"],
     develop: "develop",
   };
-  chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+  helm = "C:/ProgramData/chocoportable/bin/helm.exe";
   sqlcmd =
     '"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\SQLCMD.EXE"';
   sql = {

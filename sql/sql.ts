@@ -24,7 +24,7 @@ export class Sql {
     const args = [...baseArgs, `${sql}`];
 
     const sqlFolder = Utility.path.dirname(Options.sqlcmd.replaceAll('"', ""));
-    await Utility.runAsync("sqlcmd.exe", args, sqlFolder, {
+    await Utility.run.runAsync("sqlcmd.exe", args, sqlFolder, {
       skipEscape: true,
     });
   }

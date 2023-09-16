@@ -64,7 +64,7 @@ export class Git {
     const config = this.config(folder);
     if (!config) return "";
 
-    const results = await Utility.runAsync(
+    const results = await Utility.run.runAsync(
       Options.git.cmd,
       "rev-parse --abbrev-ref HEAD".split(" "),
       folder,
@@ -80,7 +80,7 @@ export class Git {
     const config = await this.config(folder);
     if (!config) return;
 
-    await Utility.runAsync(
+    await Utility.run.runAsync(
       Options.git.cmd,
       `checkout ${branch}`.split(" "),
       folder
@@ -95,7 +95,7 @@ export class Git {
     const config = this.config(folder);
     if (!config) return;
 
-    const results = await Utility.runAsync(
+    const results = await Utility.run.runAsync(
       Options.git.cmd,
       `branch ${branch} origin/${target}`.split(" "),
       folder
@@ -106,7 +106,7 @@ export class Git {
       return;
     }
 
-    await Utility.runAsync(
+    await Utility.run.runAsync(
       Options.git.cmd,
       `push -u origin ${branch}`.split(" "),
       folder
@@ -121,7 +121,7 @@ export class Git {
     const config = this.config(folder);
     if (!config) return "";
 
-    const results = await Utility.runAsync(
+    const results = await Utility.run.runAsync(
       Options.git.cmd,
       "symbolic-ref refs/remotes/origin/HEAD --short".split(" "),
       folder,
@@ -134,7 +134,7 @@ export class Git {
   }
 
   async fetch(folder: string = Deno.cwd()) {
-    await Utility.runAsync(Options.git.cmd, "fetch".split(" "), folder);
+    await Utility.run.runAsync(Options.git.cmd, "fetch".split(" "), folder);
   }
 
   async info(folder: string = Deno.cwd()): Promise<Config | null> {
@@ -176,7 +176,7 @@ export class Git {
   }
 
   async merge(branch: string, folder: string = Deno.cwd()) {
-    await Utility.runAsync(
+    await Utility.run.runAsync(
       Options.git.cmd,
       `merge ${branch}`.split(" "),
       folder
@@ -197,7 +197,7 @@ export class Git {
   }
 
   async localBranches(folder: string = Deno.cwd()): Promise<string[]> {
-    const results = await Utility.runAsync(
+    const results = await Utility.run.runAsync(
       Options.git.cmd,
       "branch --list".split(" "),
       folder,
@@ -212,7 +212,7 @@ export class Git {
   }
 
   async remoteBranches(folder: string = Deno.cwd()): Promise<string[]> {
-    const results = await Utility.runAsync(
+    const results = await Utility.run.runAsync(
       Options.git.cmd,
       'branch --remotes --list "origin/[^H]*"'.split(" "),
       folder,
@@ -224,7 +224,7 @@ export class Git {
   }
 
   async allBranches(folder: string = Deno.cwd()): Promise<string[]> {
-    const results = await Utility.runAsync(
+    const results = await Utility.run.runAsync(
       Options.git.cmd,
       "branch --all --list".split(" "),
       folder,
@@ -237,14 +237,18 @@ export class Git {
   }
 
   async reset(folder: string = Deno.cwd()) {
-    await Utility.runAsync(Options.git.cmd, "reset --hard".split(" "), folder);
+    await Utility.run.runAsync(
+      Options.git.cmd,
+      "reset --hard".split(" "),
+      folder
+    );
   }
 
   async status(folder: string = Deno.cwd()): Promise<string[]> {
     const config = this.config(folder);
     if (!config) return [];
 
-    const results = await Utility.runAsync(
+    const results = await Utility.run.runAsync(
       Options.git.cmd,
       "status -s".split(" "),
       folder,
@@ -260,14 +264,14 @@ export class Git {
     const config = this.config(folder);
     if (!config) return [];
 
-    await Utility.runAsync(Options.git.cmd, "status -s".split(" "), folder);
+    await Utility.run.runAsync(Options.git.cmd, "status -s".split(" "), folder);
   }
 
   async prune(folder: string = Deno.cwd()): Promise<void> {
     const config = this.config(folder);
     if (!config) return;
 
-    await Utility.runAsync(
+    await Utility.run.runAsync(
       Options.git.cmd,
       "remote prune origin".split(" "),
       folder
@@ -275,7 +279,7 @@ export class Git {
   }
 
   async pull(folder: string = Deno.cwd()) {
-    await Utility.runAsync(Options.git.cmd, "pull".split(" "), folder);
+    await Utility.run.runAsync(Options.git.cmd, "pull".split(" "), folder);
 
     if (Options.update) {
       await this.updateRemote(folder);
@@ -283,8 +287,12 @@ export class Git {
   }
 
   async undo(folder: string = Deno.cwd()) {
-    await Utility.runAsync(Options.git.cmd, "checkout -- .".split(" "), folder);
-    await Utility.runAsync(Options.git.cmd, "clean -fd".split(" "), folder);
+    await Utility.run.runAsync(
+      Options.git.cmd,
+      "checkout -- .".split(" "),
+      folder
+    );
+    await Utility.run.runAsync(Options.git.cmd, "clean -fd".split(" "), folder);
   }
 
   private getConfigFile(folder: string) {
@@ -312,6 +320,10 @@ export class Git {
     const config = this.config(folder);
     if (!config) return;
 
-    await Utility.runAsync(Options.git.cmd, `remote update`.split(" "), folder);
+    await Utility.run.runAsync(
+      Options.git.cmd,
+      `remote update`.split(" "),
+      folder
+    );
   }
 }
