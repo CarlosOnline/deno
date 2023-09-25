@@ -14,9 +14,9 @@ export default class Utility {
   static path = Path;
   static run = Run;
 
-  static async forEachParallel<T>(
+  static async forEachParallel<T, TReturn>(
     values: T[],
-    func: (item: any) => Promise<any>
+    func: (item: any) => Promise<TReturn>
   ): Promise<any> {
     return await Promise.all(values.map(async (item: any) => await func(item)));
   }
