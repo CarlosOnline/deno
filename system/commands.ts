@@ -55,7 +55,9 @@ export default class SystemCommands {
     ): Promise<FolderSize> {
       const size = await Utility.file.folderSize(folder, recursive);
       if (Options.verbose) {
-        logger.info(size);
+        logger.info(
+          `${Utility.file.formatFileSize(size).padEnd(15)} ${folder}`
+        );
       }
 
       return {
