@@ -29,6 +29,11 @@ export default class GitCommands {
     }
   }
 
+  @action("git.branch_list", "Get/Create branch")
+  async getBranchList() {
+    await GitCommands.runGitCommand(GitCommands.getBranchList);
+  }
+
   @action("git.info", "Get git info")
   async info() {
     await GitCommands.runGitCommand(GitCommands.logInfo);
@@ -228,13 +233,17 @@ export default class GitCommands {
     }
 
     await git.mergeFromBranch(`origin/${info.develop}`, folder);
-    logger.highlight(`Merged ${folder}`);
   }
 
   private static async getBranch(folder: string) {
     const git = new Git();
     const branch = await git.branch(folder);
     logger.highlight(`Branch ${branch} ${folder}`);
+  }
+
+  private static async getBranchList(folder: string) {
+    const git = new Git();
+    await git.branchList(folder);
   }
 
   private static async logInfo(folder: string) {

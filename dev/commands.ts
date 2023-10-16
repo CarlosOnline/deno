@@ -1,5 +1,5 @@
 import { action } from "../support/index.ts";
-import Options from "../support/options.ts";
+import Options, { TokenData } from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
 
@@ -49,17 +49,29 @@ export default class DevCommands {
     }
   }
 
-  @action("token", "Get authorization token")
+  @action("token", "Get authorization token", [
+    "token",
+    "token api-name environment",
+    "token reference UAT",
+  ])
   async getToken() {
+    const key = DevCommands.getTokenKey();
+
+    const tokenData = DevCommands.getTokenData(key);
+    if (tokenData == null) {
+      logger.fatal(`Missing token data for ${Options.key}`);
+      return;
+    }
+
     const formBody: string[] = [];
-    (<string[][]>Options.token.body).forEach((pair) => {
+    (<string[][]>tokenData.body).forEach((pair) => {
       const encodedKey = encodeURIComponent(pair[0]);
       const encodedValue = encodeURIComponent(pair[1]);
       formBody.push(encodedKey + "=" + encodedValue);
     });
 
     const formBodyJson = formBody.join("&");
-    const resp = await fetch(Options.token.url, {
+    const resp = await fetch(tokenData.url, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -68,8 +80,8 @@ export default class DevCommands {
     });
 
     if (!resp.ok) {
-      console.error(
-        `Fetch token failed ${resp.status} ${resp.statusText} for ${Options.token.url}`
+      logger.error(
+        `Fetch token failed ${resp.status} ${resp.statusText} for ${tokenData.url}`
       );
       return null;
     }
@@ -80,12 +92,12 @@ export default class DevCommands {
 
     await Utility.copyTextToClipboard(token);
 
-    if (Options.token.outputFilePath) {
+    if (tokenData.outputFilePath) {
       const encoder = new TextEncoder();
       const data = encoder.encode(token);
-      Deno.writeFileSync(Options.token.outputFilePath, data);
+      Deno.writeFileSync(tokenData.outputFilePath, data);
       logger.info();
-      logger.info(`Generated ${Options.token.outputFilePath}`);
+      logger.info(`Generated ${tokenData.outputFilePath}`);
     }
 
     return token;
@@ -94,5 +106,25 @@ export default class DevCommands {
   @action("test", "test")
   testMethod() {
     logger.info("Test method called");
+  }
+
+  private static getTokenData(key = "") {
+    if (!key) {
+      return Options.token;
+    }
+
+    return Options.tokens[key] || null;
+  }
+
+  private static getTokenKey() {
+    if (Options.key) {
+      return Options.key;
+    }
+
+    if (Options.args.length < 3) {
+      return "";
+    }
+
+    return `${Options.args[1]}-${Options.args[2]}`.toLocaleLowerCase();
   }
 }

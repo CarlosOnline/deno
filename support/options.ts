@@ -5,6 +5,18 @@ import {
   VisualStudioOptionsBuilder,
 } from "./options.vs.ts";
 
+export interface TokenDataBody {
+  grant_type: string;
+  client_id: string;
+  client_secret: string;
+  scope: string;
+}
+
+export interface TokenData {
+  url: string;
+  body: TokenDataBody;
+}
+
 export class DefaultOptions extends VisualStudioOptions {
   [index: string]: any;
   // Environment file to load.
