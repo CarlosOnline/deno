@@ -15,7 +15,7 @@ export default class DevCommands {
     const url: string = Options.url || Options.args[1];
 
     const rex = new RegExp(
-      `https:\/\/artifactory-wdc.[a-z]+.com\/artifactory\/rca-ce-helm\/(?<api>[a-z-]+)\/(?<api2>[a-z0-9-]+)-(?<version>[0-9]+.[0-9]+.[0-9]+)-(?<kind>[a-z]+).(?<revision>[0-9]+).tgz`
+      `https:\/\/artifactory-wdc.[a-z]+.com\/artifactory\/rca-ce-helm\/(?<api>[^/]+)\/(?<api2>[^-]+-api)-.*.tgz`
     );
     const match = url.match(rex);
     if (!match?.groups) {
@@ -52,6 +52,7 @@ export default class DevCommands {
   @action("token", "Get authorization token", [
     "token",
     "token api-name environment",
+    "token spotcheck-UAT",
     "token reference UAT",
   ])
   async getToken() {
@@ -70,6 +71,7 @@ export default class DevCommands {
       formBody.push(encodedKey + "=" + encodedValue);
     });
 
+    console.log(tokenData);
     const formBodyJson = formBody.join("&");
     const resp = await fetch(tokenData.url, {
       method: "POST",
@@ -121,10 +123,14 @@ export default class DevCommands {
       return Options.key;
     }
 
-    if (Options.args.length < 3) {
-      return "";
+    if (Options.args.length == 2) {
+      return Options.args[1].toLocaleLowerCase();
     }
 
-    return `${Options.args[1]}-${Options.args[2]}`.toLocaleLowerCase();
+    if (Options.args.length == 3) {
+      return `${Options.args[1]}-${Options.args[2]}`.toLocaleLowerCase();
+    }
+
+    return "";
   }
 }
