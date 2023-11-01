@@ -212,7 +212,10 @@ export default class GitCommands {
     console.log(url);
 
     if (!Options.test) {
-      Utility.run.runAsync(Options.chrome, [url], folder, { skipEscape: true });
+      Utility.run.runAsync(Options.chrome, [url], folder, {
+        skipEscape: true,
+        noWait: true,
+      });
     }
 
     logger.highlight(`Create PR ${info.branch} ${folder}`);
