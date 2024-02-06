@@ -102,12 +102,19 @@ export default class GitCommands {
   }
 
   private static async runGitCommand(action: GitActionCallback) {
-    const folder = Options.folder || Deno.cwd();
+    let folder = Options.folder || Deno.cwd();
 
     if (Options.all) {
       return await GitCommands.forAllRepos(folder, action);
     } else {
-      return await action(folder);
+      const git = new Git();
+      const gitFolder = git.gitFolder(folder);
+      if (!gitFolder) {
+        logger.error(`No git repository found for ${folder}`);
+        return;
+      }
+
+      return await action(gitFolder);
     }
   }
 
@@ -222,14 +229,14 @@ export default class GitCommands {
   }
 
   private static async mergeFromDevelopBranch(folder: string) {
-    logger.highlight(`Merging ${folder}`);
-
     const git = new Git();
     const info = await git.info(folder);
     if (!info) {
       logger.error(`Not a git repository for ${folder}`);
       return;
     }
+
+    logger.highlight(`Merging ${folder} ${info.develop} into ${info.branch}`);
 
     if (Options.reset) {
       await git.reset();
@@ -241,7 +248,8 @@ export default class GitCommands {
   private static async getBranch(folder: string) {
     const git = new Git();
     const branch = await git.branch(folder);
-    logger.highlight(`Branch ${branch} ${folder}`);
+    const repo = Utility.path.basename(folder);
+    logger.highlight(`Branch ${repo.padEnd(40)} ${branch}`);
   }
 
   private static async getBranchList(folder: string) {

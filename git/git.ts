@@ -168,6 +168,19 @@ export class Git {
     return config;
   }
 
+  gitFolder(folder: string) {
+    while (folder) {
+      const config = this.getConfigFile(folder);
+      if (config) return folder;
+
+      const previous = folder;
+      folder = Utility.path.dirname(folder);
+      if (folder == previous) return null;
+    }
+
+    return null;
+  }
+
   listRepos(folder: string = Deno.cwd()) {
     return Utility.file
       .listDirectories(folder)
@@ -191,7 +204,7 @@ export class Git {
 
     await this.merge(branch, folder);
 
-    logger.info(`Merged ${branch} into ${folder}`);
+    logger.info(`Merged ${branch} into ${info.branch} for ${folder}`);
   }
 
   async localBranches(folder: string = Deno.cwd()): Promise<string[]> {

@@ -15,11 +15,11 @@ export default class DevCommands {
     const url: string = Options.url || Options.args[1];
 
     const rex = new RegExp(
-      `https:\/\/artifactory-wdc.[a-z]+.com\/artifactory\/rca-ce-helm\/(?<api>[^/]+)\/(?<api2>[^-]+-api)-.*.tgz`
+      `https:\/\/artifactory-wdc.[a-z]+.com\/artifactory\/rca-ce-helm\/(?<api>[^/]+)\/(?<api2>.+)-.*.tgz`
     );
     const match = url.match(rex);
     if (!match?.groups) {
-      logger.error("Failed to match download uri pattern");
+      logger.warn("Failed to match download uri pattern");
       return;
     }
 
@@ -27,8 +27,7 @@ export default class DevCommands {
     const api2 = match.groups.api2;
 
     if (api != api2) {
-      logger.error(`api name mismatch: ${api} != ${api2}`);
-      return;
+      logger.warn(`api name mismatch: ${api} != ${api2}`);
     }
 
     logger.warn(`Deploying ${api}`);

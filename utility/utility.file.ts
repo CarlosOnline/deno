@@ -1,6 +1,3 @@
-import { logger } from "./index.ts";
-import Utility from "./utility.ts";
-
 export default class File {
   static exists(filePath: string) {
     try {
