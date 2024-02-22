@@ -9,6 +9,7 @@ export interface Config {
   develop: string;
   folder: string;
   isMainBranch: boolean;
+  isSpecialBranch: boolean;
   remotes: string[];
   locals: string[];
   repo: string;
@@ -22,6 +23,7 @@ const DefaultConfig: Config = {
   develop: "",
   folder: "",
   isMainBranch: false,
+  isSpecialBranch: false,
   remotes: [],
   repo: "",
   locals: [],
@@ -31,6 +33,35 @@ const DefaultConfig: Config = {
 
 function normalizeBranch(branch: string) {
   return branch.trim().replace("remotes/origin/", "").replace("origin/", "");
+}
+
+/**
+ * Returns branch name, excluding preceeding asterisk
+ * @param branch branch name
+ * @returns branch name
+ */
+function getBranchName(branch: string) {
+  const parts = branch.split(" ");
+  return parts[parts.length - 1].trim();
+}
+
+function isSpecialBranch(branch: string, config: Config | null = null) {
+  branch = getBranchName(branch);
+
+  if (
+    branch == "HEAD" ||
+    branch == "master" ||
+    branch == "main" ||
+    branch == "develop"
+  ) {
+    return true;
+  }
+
+  if (config) {
+    return config.develop == branch || config.defaultBranch == branch;
+  }
+
+  return false;
 }
 
 export class Git {
@@ -57,6 +88,8 @@ export class Git {
       const parts = config.url.split("/");
       config.repo = parts[parts.length - 1].replace(".git", "");
     }
+
+    config.isSpecialBranch = isSpecialBranch(config.branch, config);
 
     return config;
   }
@@ -264,10 +297,34 @@ export class Git {
   }
 
   async prune(folder: string = Deno.cwd()): Promise<void> {
-    const config = this.config(folder);
-    if (!config) return;
+    const info = await this.info(folder);
+    if (!info) return;
 
     await this.runAsync("remote prune origin".split(" "), folder);
+
+    const mergedResponse = await this.runAsync(
+      "branch --merged".split(" "),
+      folder,
+      {
+        capture: true,
+      }
+    );
+
+    const mergedBranches = mergedResponse
+      .split("\n")
+      .map((branch) => getBranchName(branch));
+
+    const localBranches = info.locals.filter(
+      (branch) => !mergedBranches.includes(branch)
+    );
+
+    const deleteBranches = [...mergedBranches, ...localBranches].filter(
+      (branch) => {
+        return !isSpecialBranch(branch, info) && !info.remotes.includes(branch);
+      }
+    );
+    if (!deleteBranches.length) return;
+    await this.deleteBranches(deleteBranches, folder);
   }
 
   async pull(folder: string = Deno.cwd()) {
@@ -297,6 +354,17 @@ export class Git {
     }
   }
 
+  private async deleteBranches(branches: string[], folder: string) {
+    const proceed = confirm(`Delete branches?\n   ${branches.join("\n   ")}
+
+    Delete branches?`);
+    if (!proceed) return;
+
+    await Utility.forEachParallel(branches, async (branch) => {
+      await this.runAsync(`branch -D ${branch}`.split(" "), folder);
+    });
+  }
+
   private isRepo(folder: string): boolean {
     const config = this.config(folder);
     if (!config) return false;
@@ -316,12 +384,10 @@ export class Git {
     folder: string,
     runOptions: RunOptions = DefaultRunOptions
   ) {
-    const results = await Utility.run.runAsync(
-      Options.git.cmd,
-      args,
-      folder,
-      runOptions
-    );
+    const results = await Utility.run.runAsync(Options.git.cmd, args, folder, {
+      ...runOptions,
+      ...{ verbose: Options.verbose },
+    });
     if (results && results.startsWith("ERROR")) {
       logger.error(`git ${args.join(" ")} failed for ${folder}`);
     }
