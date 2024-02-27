@@ -1,5 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
-
 import Options from "../support/options.ts";
 
 import { action } from "../support/index.ts";
