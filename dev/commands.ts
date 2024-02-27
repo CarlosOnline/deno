@@ -2,6 +2,7 @@ import { action } from "../support/index.ts";
 import Options, { TokenData } from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
+import Token from "./token.ts";
 
 export default class DevCommands {
   @action("deploy", "Deploy to dev", [
@@ -63,32 +64,9 @@ export default class DevCommands {
       return;
     }
 
-    const formBody: string[] = [];
-    (<string[][]>tokenData.body).forEach((pair) => {
-      const encodedKey = encodeURIComponent(pair[0]);
-      const encodedValue = encodeURIComponent(pair[1]);
-      formBody.push(encodedKey + "=" + encodedValue);
-    });
+    const service = new Token();
+    const token = await service.token(tokenData);
 
-    console.log(tokenData);
-    const formBodyJson = formBody.join("&");
-    const resp = await fetch(tokenData.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formBodyJson,
-    });
-
-    if (!resp.ok) {
-      logger.error(
-        `Fetch token failed ${resp.status} ${resp.statusText} for ${tokenData.url}`
-      );
-      return null;
-    }
-
-    const body = await resp.json();
-    const token = body.access_token;
     logger.info(token);
 
     await Utility.copyTextToClipboard(token);
