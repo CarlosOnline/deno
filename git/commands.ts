@@ -29,6 +29,20 @@ export default class GitCommands {
     }
   }
 
+  @action("git.delete_branch", "Delete branch")
+  async deleteBranch() {
+    const folder = Options.folder || Deno.cwd();
+    const branch = Options.branch || Options.args[1];
+
+    if (!branch) {
+      logger.error(`Missing branch name for ${folder}`);
+      return;
+    }
+
+    const git = new Git();
+    await git.deleteBranch(branch, folder);
+  }
+
   @action("git.branch_list", "Get/Create branch")
   async getBranchList() {
     await GitCommands.runGitCommand(GitCommands.getBranchList);
@@ -61,13 +75,13 @@ export default class GitCommands {
 
   @action("git.status", "Get status")
   async status() {
-    await GitCommands.runGitCommand(GitCommands.statusOfRepo);
+    await GitCommands.runGitCommand(GitCommands.statusLogOfRepo);
   }
 
   @action("git.undo", "Undo repositories")
   async undo() {
     const undoChanges = <GitUndoChanges[]>(
-      await GitCommands.runGitCommand(GitCommands.getUndoChangesForRepo)
+      await GitCommands.runGitCommand(GitCommands.getStatusForRepo)
     );
 
     const pendingChanges = undoChanges.filter((item) => item.status.length > 0);
@@ -102,7 +116,7 @@ export default class GitCommands {
   }
 
   private static async runGitCommand(action: GitActionCallback) {
-    let folder = Options.folder || Deno.cwd();
+    const folder = Options.folder || Deno.cwd();
 
     if (Options.all) {
       return await GitCommands.forAllRepos(folder, action);
@@ -294,7 +308,11 @@ export default class GitCommands {
     logger.highlight(`Pulled ${folder}`);
   }
 
-  private static async statusOfRepo(folder: string) {
+  /**
+   * Log status of repo
+   * @param folder folder
+   */
+  private static async statusLogOfRepo(folder: string) {
     logger.highlight(`status ${folder}`);
 
     const git = new Git();
@@ -309,7 +327,12 @@ export default class GitCommands {
     logger.highlight(`Statused ${folder}`);
   }
 
-  private static async getUndoChangesForRepo(folder: string) {
+  /**
+   * Get changed files for repo.  git status -s
+   * @param folder folder
+   * @returns list of changed files
+   */
+  private static async getStatusForRepo(folder: string) {
     const git = new Git();
     const config = git.config(folder);
     if (!config) {
