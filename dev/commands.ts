@@ -72,10 +72,7 @@ export default class DevCommands {
     await Utility.copyTextToClipboard(token);
 
     if (tokenData.outputFilePath) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(token);
-      Deno.writeFileSync(tokenData.outputFilePath, data);
-      logger.info();
+      Utility.file.writeTextFile(tokenData.outputFilePath, token);
       logger.info(`Generated ${tokenData.outputFilePath}`);
     }
 

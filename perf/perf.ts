@@ -1,37 +1,92 @@
 // deno-lint-ignore-file no-explicit-any
 import Token from "../dev/token.ts";
+import { Sql } from "../sql/sql.ts";
 import Options from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
 
-const OneMinuteMs = 1000 * 60; // 1 minute
-const MaxDurationMinutes = 20;
-const MaxDuration = OneMinuteMs * MaxDurationMinutes;
+const OneSecondMs = 1000; // 1 second
+const MaxDurationSeconds = 30;
+const MaxDuration = MaxDurationSeconds * OneSecondMs;
 
 type PerfEndpoint = {
-  title: string;
   url: string;
   method: string;
   payload: any;
+  delay: number;
+};
+
+type FetchResponse = {
+  status: number;
+  statusText: string;
+  error: string | null;
+  body: string | null;
+  bodyLength: number | undefined;
+};
+
+export type PerfResult = {
+  status: number;
+  method: string;
+  endpoint: string;
+  url: string;
+  duration: number;
+  startTime: Date;
+  endTime: Date;
+  error: string;
+  delay: number;
+  bodyLength: number | undefined;
+  envrionment: string;
 };
 
 function toDurationStringRaw(duration: number) {
-  if (duration < OneMinuteMs) return duration.toLocaleString() + " ms";
+  if (duration < OneSecondMs) return duration.toLocaleString() + "  ms";
 
-  return (duration / OneMinuteMs).toLocaleString() + " min";
+  return (duration / OneSecondMs).toLocaleString() + " sec";
 }
 
 function toDurationString(duration: number) {
   const value = toDurationStringRaw(duration);
-  return value.padEnd(10, " ");
+  return value.padStart(10, " ");
 }
 
+function getEndpoint(url: string) {
+  const parts = url.split("?")[0].split("/");
+  return parts[parts.length - 1];
+}
+
+function int(value: number) {
+  return value.toLocaleString().padStart(10, " ");
+}
+
+const PerfFolder = "c:\\temp\\perf";
+
 export class Perf {
-  public async getToken() {
-    const service = new Token();
-    const tokenData = Options.tokens[Options.perf.token];
-    const token = await service.token(tokenData);
-    return token;
+  private token: string;
+  private iteration: number;
+  private stats = {
+    total: 0,
+    success: 0,
+    failed: 0,
+  };
+
+  public constructor() {
+    this.token = "";
+    this.iteration = 0;
+  }
+
+  public async test() {
+    this.token = await this.getToken();
+
+    while (true) {
+      await this.runEndpoints(
+        (Options.perf.endpoints as PerfEndpoint[]).filter(
+          (item) => item.delay > 0
+        ),
+        false
+      );
+
+      prompt("Press Enter to continue");
+    }
   }
 
   public async loop(interval: number) {
@@ -42,56 +97,122 @@ export class Perf {
     );
 
     while (true) {
-      await this.runAll();
-      console.log("...");
+      this.token = await this.getToken();
+
+      await this.runAll(false);
+      await this.runMultipleTimes(true);
+      await this.runAll(true);
+      console.log("\r\n...");
       await Utility.sleep(interval * 60);
     }
   }
 
-  public async runAll() {
-    logger.info("Starting perf tests at " + new Date().toLocaleString());
-    const token = await this.getToken();
+  private async runMultipleTimes(delay: boolean) {
+    const endpoints = (Options.perf.endpoints as PerfEndpoint[])
+      .filter((item) => item.delay > 0)
+      .map((endpoint) => Array(10).fill(endpoint))
+      .flat();
+    await this.runEndpoints(endpoints, delay);
+  }
 
-    const tasks = Options.perf.endpoints.map((endpoint: PerfEndpoint) =>
-      this.timeIt(endpoint, token)
+  private async runAll(delay: boolean) {
+    await this.runEndpoints(Options.perf.endpoints, delay);
+  }
+
+  private async runEndpoints(endpoints: PerfEndpoint[], delay: boolean) {
+    this.iteration++;
+
+    logger.info(
+      `${int(this.iteration)} Running endpoints: ${
+        endpoints.length
+      } ${this.iteration.toLocaleString().padStart(5)} at ` +
+        new Date().toLocaleString()
+    );
+
+    const tasks = endpoints.map((endpoint: PerfEndpoint) =>
+      this.timeIt(endpoint, this.token, delay)
     );
 
     const results = await Promise.all(tasks);
 
+    await this.reportResults(results);
     this.writePerResults(results);
   }
 
-  private writePerResults(results: any[]) {
-    const folder = "c:\\temp\\perf";
+  private async reportResults(results: PerfResult[]) {
+    const sql = new Sql(
+      Options.perf.sql.server,
+      Options.perf.sql.database,
+      Options.perf.sql.username,
+      Options.perf.sql.password
+    );
+
+    const query = `
+DECLARE @Request NVARCHAR(MAX) = '${JSON.stringify(results)}';
+EXEC [Perf].[PerfDataCreate] @Request
+    `;
+    const queryFolder = `${PerfFolder}\\query`;
+    Utility.path.ensure_directory(queryFolder);
+
+    const queryFilePath = `${queryFolder}\\${Utility.random.generateUUID()}.sql`;
+    Utility.file.writeTextFile(queryFilePath, query);
+
+    await uploadResults();
+
+    Utility.file.deleteFile(queryFilePath);
+
+    async function uploadResults() {
+      let error = "";
+
+      for (let idx = 0; idx < 3; idx++) {
+        error = <string>await sql.exec(queryFilePath, true);
+        if (!error) {
+          console.log(
+            `Uploaded results: ${idx} EXEC [Perf].[PerfDataCreate] ${queryFilePath}`
+          );
+          return;
+        }
+      }
+
+      console.log(
+        `Failed to upload results: EXEC [Perf].[PerfDataCreate] ${queryFilePath}`
+      );
+      console.log(query);
+    }
+  }
+
+  private writePerResults(results: PerfResult[]) {
+    const folder = PerfFolder;
     Utility.path.ensure_directory(folder);
 
     const allResultsCsvFilePath = `${folder}\\perf.csv`;
     const allResultsCsv = results.map((item) => toCsvLine(item));
-    Deno.writeTextFile(allResultsCsvFilePath, allResultsCsv.join("\n"), {
-      append: true,
-      create: true,
-    });
-
-    results.forEach((item) => {
-      const csvFileName = item.title.replace(
-        /[\\\.\+\*\?\^\$\[\]\(\)\{\}\/\'\#\:\!\=\|]/gi,
-        "-"
-      );
-      const csvFilePath = `${folder}\\${csvFileName}.csv`;
-
-      const line = toCsvLine(item);
-      Deno.writeTextFile(csvFilePath, line + "\r\n", {
+    Utility.file.writeTextFile(
+      allResultsCsvFilePath,
+      allResultsCsv.join("\r\n"),
+      {
         append: true,
         create: true,
-      });
-    });
+      }
+    );
 
-    function toCsvLine(item: any): string {
-      return `${item.method},${
-        item.duration
-      },${item.start.toISOString()},${item.end.toISOString()},${item.url},${
-        item.error
-      }`;
+    function toCsvLine(item: PerfResult): string {
+      const startTime = item.startTime.toISOString();
+      const endTime = item.endTime.toISOString();
+      const parts = [
+        "###",
+        item.method,
+        item.duration,
+        startTime,
+        endTime,
+        item.url.replace(/,/g, ""),
+        item.error?.replace(/,/g, ""),
+        ,
+        item.delay,
+        item.status,
+        item.bodyLength,
+      ];
+      return parts.join(",");
     }
   }
 
@@ -109,32 +230,61 @@ export class Perf {
       },
       body: payload ? JSON.stringify(payload) : undefined,
     };
+
     try {
+      this.stats.total++;
+
+      logger.trace(
+        `\r${int(this.stats.success)} / ${int(this.stats.total)} / ${int(
+          this.stats.failed
+        )}                         `
+      );
+
       await fetch(url, params);
       const resp = await fetch(url, params);
+      this.stats.success += resp.ok ? 1 : 0;
+      this.stats.failed += resp.ok ? 0 : 1;
+
+      logger.trace(
+        `\r${int(this.stats.success)} / ${int(this.stats.total)} / ${int(
+          this.stats.failed
+        )}                         `
+      );
 
       if (!resp.ok) {
         logger.error(
           `Fetch failed ${resp.status} ${resp.statusText} for ${url}`
         );
-        return null;
+
+        return <FetchResponse>{
+          status: resp.status || 500,
+          error: resp.statusText || "Unknown error",
+        };
       }
 
-      const body = await resp.json();
-      return body;
+      const body = await resp.text();
+      return <FetchResponse>{
+        status: resp.status,
+        error: body?.length > 0 ? null : "Empty body",
+        bodyLength: body?.length,
+      };
     } catch (error) {
       logger.error(`Fetch failed ${error} for ${url}`);
-      return {
-        error: "Error: " + error,
+      this.stats.failed++;
+      return <FetchResponse>{
+        status: 500,
+        error: error.toString().replace(/,/g, "-") || "Unknown exception",
       };
     }
   }
 
-  private async timeIt<T>(endpoint: PerfEndpoint, token: string) {
+  private async timeIt(endpoint: PerfEndpoint, token: string, delay: boolean) {
+    const delaySeconds = await this.delay(delay, endpoint);
+
     const now = new Date();
     const start = Date.now();
 
-    const results: any = await this.fetch(
+    const results: FetchResponse = await this.fetch(
       endpoint.url,
       token,
       endpoint.method,
@@ -143,27 +293,38 @@ export class Perf {
 
     const end = Date.now();
     const duration = end - start; // + MaxDuration;
-    logger.info(toDurationString(duration), endpoint.method, endpoint.url);
 
-    if (duration > MaxDuration) {
-      logger.error(
-        `${now.toLocaleString()}      : Duration ${toDurationString(
-          duration
-        )} exceeds max duration ${MaxDurationMinutes} for ${endpoint.method} ${
-          endpoint.url
-        }`
-      );
+    if (Options.verbose) {
+      logger.info(toDurationString(duration), endpoint.method, endpoint.url);
     }
-    const error = results?.error ? results.error : null;
 
-    return {
+    return <PerfResult>{
+      status: results.status,
       method: endpoint.method,
-      title: endpoint.title,
+      endpoint: getEndpoint(endpoint.url),
       url: endpoint.url,
       duration,
-      start: now,
-      end: new Date(),
-      error: error,
+      startTime: now,
+      endTime: new Date(),
+      error: results.error || "",
+      delay: delaySeconds || "",
+      bodyLength: results.bodyLength,
     };
+  }
+
+  private async delay(delay: boolean, endpoint: PerfEndpoint) {
+    if (!delay || endpoint.delay <= 0) return null;
+
+    const delaySeconds = Utility.random.getRandomInt(2, endpoint.delay);
+    await Utility.sleep(delaySeconds);
+
+    return delaySeconds;
+  }
+
+  private async getToken() {
+    const service = new Token();
+    const tokenData = Options.tokens[Options.perf.token];
+    const token = await service.token(tokenData);
+    return token;
   }
 }

@@ -5,6 +5,7 @@ env
 *.swp
 .env
 
+/node_modules/
 /.cargo_home/
 /.idea/
 /.vs/

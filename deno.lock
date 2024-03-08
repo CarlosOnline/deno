@@ -1,5 +1,27 @@
 {
   "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@types/papaparse@^5.3.14": "npm:@types/papaparse@5.3.14",
+      "npm:papaparse@^5.4.1": "npm:papaparse@5.4.1"
+    },
+    "npm": {
+      "@types/node@18.16.19": {
+        "integrity": "sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==",
+        "dependencies": {}
+      },
+      "@types/papaparse@5.3.14": {
+        "integrity": "sha512-LxJ4iEFcpqc6METwp9f6BV6VVc43m6MfH0VqFosHvrUgfXiFe6ww7R3itkOQ+TCK6Y+Iv/+RnnvtRZnkc5Kc9g==",
+        "dependencies": {
+          "@types/node": "@types/node@18.16.19"
+        }
+      },
+      "papaparse@5.4.1": {
+        "integrity": "sha512-HipMsgJkZu8br23pW15uvo6sib6wne/4woLZPlFf3rpDyMe9ywEXUsuD7+6K9PRkJlVT51j/sCOYDKGGS3ZJrw==",
+        "dependencies": {}
+      }
+    }
+  },
   "redirects": {
     "https://deno.land/std/fmt/colors.ts": "https://deno.land/std@0.200.0/fmt/colors.ts",
     "https://deno.land/std/fs/mod.ts": "https://deno.land/std@0.200.0/fs/mod.ts",

@@ -7,11 +7,13 @@ import File from "./utility.file.ts";
 import Log from "./utility.log.ts";
 import Path from "./utility.path.ts";
 import Run from "./utility.run.ts";
+import Random from "./utility.random.ts";
 
 export default class Utility {
   static file = File;
   static log = Log;
   static path = Path;
+  static random = Random;
   static run = Run;
 
   static async forEachParallel<T, TReturn>(
