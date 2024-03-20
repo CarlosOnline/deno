@@ -5,7 +5,7 @@ import { logger } from "./utility.log.ts";
 export interface RunOptions {
   verbose?: boolean;
   capture?: boolean;
-  noWait?: boolean;
+  skipWait?: boolean;
   async?: boolean;
   skipEscape?: boolean;
   skipDiagnostics?: boolean;
@@ -14,7 +14,7 @@ export interface RunOptions {
 export const DefaultRunOptions: RunOptions = {
   verbose: false,
   capture: false,
-  noWait: false,
+  skipWait: false,
   async: false,
   skipEscape: false,
   skipDiagnostics: false,
@@ -43,12 +43,14 @@ export default class Run {
     const cmdOptions = Run.getRunOptions(args, folder, runOptions);
     const commander = new Deno.Command(cmd, cmdOptions);
 
-    if (!runOptions.noWait) {
-      const results = commander.outputSync();
-      return Run.procesRun(results, runOptions, cmd, args);
-    } else {
+    if (runOptions.skipWait) {
+      // Run process async in background.
+      commander.output();
       return "";
     }
+
+    const results = commander.outputSync();
+    return Run.extractProcessOutput(results, runOptions, cmd, args);
   }
 
   static async runAsync(
@@ -71,10 +73,15 @@ export default class Run {
     const cmdOptions = Run.getRunOptions(args, folder, runOptions);
     const commander = new Deno.Command(cmd, cmdOptions);
 
-    if (!runOptions.noWait) {
+    if (!runOptions.skipWait) {
       const results = await commander.output();
-      return Run.procesRun(results, runOptions, cmd, args);
+      return Run.extractProcessOutput(results, runOptions, cmd, args);
     } else {
+      setTimeout(async () => {
+        const results = await commander.output();
+        return Run.extractProcessOutput(results, runOptions, cmd, args);
+      }, 10);
+
       return "";
     }
   }
@@ -108,7 +115,7 @@ export default class Run {
     return options;
   }
 
-  private static procesRun(
+  private static extractProcessOutput(
     results: Deno.CommandOutput,
     runOptions: RunOptions,
     cmd: string,

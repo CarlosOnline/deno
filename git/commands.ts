@@ -48,6 +48,11 @@ export default class GitCommands {
     await GitCommands.runGitCommand(GitCommands.getBranchList);
   }
 
+  @action("git.clone", "Generate git clone commands")
+  async generateGitCloneCommands() {
+    await GitCommands.runGitCommand(GitCommands.generateGitCloneCommand);
+  }
+
   @action("git.info", "Get git info")
   async info() {
     await GitCommands.runGitCommand(GitCommands.logInfo);
@@ -135,9 +140,15 @@ export default class GitCommands {
   private static async forAllRepos(folder: string, action: GitActionCallback) {
     const repos = GitCommands.getAllRepos(folder);
 
-    const tasks = repos.map((folder) => action(folder));
+    if (Options.sequential) {
+      Utility.forEachSequential(repos, async (repo) => {
+        await action(repo);
+      });
+    } else {
+      const tasks = repos.map((folder) => action(folder));
 
-    return await Promise.all(tasks);
+      return await Promise.all(tasks);
+    }
   }
 
   private static async checkoutBranch(folder: string) {
@@ -235,11 +246,22 @@ export default class GitCommands {
     if (!Options.test) {
       Utility.run.runAsync(Options.chrome, [url], folder, {
         skipEscape: true,
-        noWait: true,
+        skipWait: true,
       });
     }
 
     logger.highlight(`Create PR ${info.branch} ${folder}`);
+  }
+
+  private static async generateGitCloneCommand(folder: string) {
+    const git = new Git();
+    const info = git.config(folder);
+    if (!info) {
+      return;
+    }
+
+    const url = info.url;
+    logger.info(`git clone ${url}`);
   }
 
   private static async mergeFromDevelopBranch(folder: string) {
