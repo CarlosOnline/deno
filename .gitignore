@@ -5,6 +5,8 @@ env
 *.swp
 .env
 
+node_modules/
+/node_modules/
 /.cargo_home/
 /.idea/
 /.vs/
@@ -34,3 +36,4 @@ gclient_config.py_entries
 
 # JUnit files produced by deno test --junit
 junit.xml
+node_modules/.yarn-integrity

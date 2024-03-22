@@ -90,6 +90,18 @@ export default class File {
     return decoder.decode(data);
   }
 
+  static readFileSafe(filePath: string): string {
+    try {
+      return this.readFile(filePath);
+    } catch {
+      return "";
+    }
+  }
+
+  static writeFile(filePath: string, contents: string): void {
+    Deno.writeTextFileSync(filePath, contents);
+  }
+
   static async folderSize(folder: string, recursive = true) {
     let size = 0;
     let folderSizes: Promise<number>[] = [];

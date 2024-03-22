@@ -34,6 +34,7 @@ export default class Log {
     Utility.log.error(args);
     //Events.emit(Events.FatalError, message);
     Deno.exit(-1);
+    throw "Fatal";
   }
 }
 
