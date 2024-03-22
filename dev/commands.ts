@@ -1,11 +1,11 @@
-import { action } from "../support/index.ts";
+import { command } from "../support/index.ts";
 import Options, { TokenData } from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
 import Token from "./token.ts";
 
 export default class DevCommands {
-  @action("deploy", "Deploy to dev", [
+  @command("deploy", "Deploy to dev", [
     "deploy https://artifactory-wdc.company.com/artifactory/rca-ce-helm/XXXX-api/XXX-api-2.1.7-beta.40.tgz",
   ])
   async deploy() {
@@ -49,7 +49,7 @@ export default class DevCommands {
     }
   }
 
-  @action("token", "Get authorization token", [
+  @command("token", "Get authorization token", [
     "token",
     "token api-name environment",
     "token spotcheck-UAT",
@@ -79,7 +79,7 @@ export default class DevCommands {
     return token;
   }
 
-  @action("test", "test")
+  @command("test", "test")
   testMethod() {
     logger.info("Test method called");
   }

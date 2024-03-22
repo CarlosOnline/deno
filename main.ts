@@ -1,4 +1,4 @@
-import { ActionRunner } from "./support/actions.ts";
+import { CommandRunner } from "./support/commands.ts";
 import { logger } from "./utility/index.ts";
 import Options from "./support/options.ts";
 
@@ -22,9 +22,9 @@ new VisualStudioCommands();
 
 if (!Options.args.length) {
   logger.error("Missing action");
-  ActionRunner.usage();
+  CommandRunner.usage();
   Deno.exit(1);
 }
 
 const action = Options.args[0];
-await ActionRunner.run(action);
+await CommandRunner.run(action);

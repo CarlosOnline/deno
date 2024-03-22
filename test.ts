@@ -1,11 +1,11 @@
 // deno-lint-ignore-file no-explicit-any
 import { Git } from "./git/index.ts";
-import { action } from "./support/index.ts";
+import { command } from "./support/index.ts";
 import Options from "./support/options.ts";
 import Utility from "./utility/utility.ts";
 
 export default class TestCommands {
-  @action("tests", "Tests")
+  @command("tests", "Tests")
   static async Run() {
     const repoFolder = "e:/samples/deno2";
     const repoFolder3 = "e:/samples/MSBuild.Sdk.SqlProj";

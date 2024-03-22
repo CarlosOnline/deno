@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
+import "reflect-metadata";
 
-import { action } from "../support/index.ts";
+import { command } from "../support/index.ts";
 import Options from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
@@ -15,12 +16,12 @@ type GitUndoChanges = {
 };
 
 export default class GitCommands {
-  @action("create_pr", "Create pull request")
+  @command("create_pr", "Create pull request")
   async createPullRequest() {
     await GitCommands.runGitCommand(GitCommands.createPullRequest);
   }
 
-  @action("git.branch", "Get/Create branch")
+  @command("git.branch", "Get/Create branch")
   async getBranch() {
     if (Options.args.length == 1) {
       await GitCommands.runGitCommand(GitCommands.getBranch);
@@ -29,7 +30,7 @@ export default class GitCommands {
     }
   }
 
-  @action("git.delete_branch", "Delete branch")
+  @command("git.delete_branch", "Delete branch")
   async deleteBranch() {
     const folder = Options.folder || Deno.cwd();
     const branch = Options.branch || Options.args[1];
@@ -43,47 +44,47 @@ export default class GitCommands {
     await git.deleteBranch(branch, folder);
   }
 
-  @action("git.branch_list", "Get/Create branch")
+  @command("git.branch_list", "Get/Create branch")
   async getBranchList() {
     await GitCommands.runGitCommand(GitCommands.getBranchList);
   }
 
-  @action("git.clone", "Generate git clone commands")
+  @command("git.clone", "Generate git clone commands")
   async generateGitCloneCommands() {
     await GitCommands.runGitCommand(GitCommands.generateGitCloneCommand);
   }
 
-  @action("git.info", "Get git info")
+  @command("git.info", "Get git info")
   async info() {
     await GitCommands.runGitCommand(GitCommands.logInfo);
   }
 
-  @action("git.develop", "Checkout develop")
+  @command("git.develop", "Checkout develop")
   async checkoutDevelop() {
     await GitCommands.runGitCommand(GitCommands.checkoutDevelop);
   }
 
-  @action("git.merge", "Merge from develop")
+  @command("git.merge", "Merge from develop")
   async mergeFromDevelop() {
     await GitCommands.runGitCommand(GitCommands.mergeFromDevelopBranch);
   }
 
-  @action("git.prune", "Prune repositories")
+  @command("git.prune", "Prune repositories")
   async prune() {
     await GitCommands.runGitCommand(GitCommands.pruneRepo);
   }
 
-  @action("git.pull", "Pull repositories")
+  @command("git.pull", "Pull repositories")
   async pull() {
     await GitCommands.runGitCommand(GitCommands.pullRepo);
   }
 
-  @action("git.status", "Get status")
+  @command("git.status", "Get status")
   async status() {
     await GitCommands.runGitCommand(GitCommands.statusLogOfRepo);
   }
 
-  @action("git.undo", "Undo repositories")
+  @command("git.undo", "Undo repositories")
   async undo() {
     const undoChanges = <GitUndoChanges[]>(
       await GitCommands.runGitCommand(GitCommands.getStatusForRepo)

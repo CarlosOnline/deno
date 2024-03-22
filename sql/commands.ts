@@ -1,13 +1,13 @@
 // deno-lint-ignore-file no-explicit-any
 
-import { action } from "../support/index.ts";
+import { command } from "../support/index.ts";
 import Options from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
 import { Sql } from "./sql.ts";
 
 export default class SqlCommands {
-  @action("sql.recreate", "Recreate sql sprocs / views etc", [
+  @command("sql.recreate", "Recreate sql sprocs / views etc", [
     "sql.recreate C:\\Temp\\SQL\\recreate.ref.txt --server USNDCCHSQLD06.ccaintranet.com\\DEV01 --database ARKRef",
   ])
   async recreateSqlObjects() {

@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 
-import { action } from "../support/index.ts";
+import { command } from "../support/index.ts";
 import Options from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
@@ -9,12 +9,12 @@ import { Mvn } from "./index.ts";
 type MvnActionCallback = (...args: any[]) => Promise<any>;
 
 export default class MvnCommands {
-  @action("mvn", "Run maven command")
+  @command("mvn", "Run maven command")
   async runMaven() {
     await MvnCommands.runMvnCommand(MvnCommands.runMavenCommand);
   }
 
-  @action("mvn.info", "Get mvn info")
+  @command("mvn.info", "Get mvn info")
   async info() {
     await MvnCommands.runMvnCommand(MvnCommands.logInfo);
   }

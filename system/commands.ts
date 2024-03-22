@@ -1,4 +1,4 @@
-import { action } from "../support/index.ts";
+import { command } from "../support/index.ts";
 import Options from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
@@ -10,7 +10,7 @@ type FolderSize = {
 };
 
 export default class SystemCommands {
-  @action("folder-size", "Get size of folders", [
+  @command("folder-size", "Get size of folders", [
     "folder-size c:\\temp --folders --size 30KB",
     "folder-size c:\\temp --folders --size 100GB",
     "folder-size c:\\temp --folders --size 1048576",
@@ -72,7 +72,7 @@ export default class SystemCommands {
     }
   }
 
-  @action("remove-empty-dirs", "Remove empty folders")
+  @command("remove-empty-dirs", "Remove empty folders")
   removeEmptyFolders(folder = Deno.cwd()) {
     const commands = new SystemCommands();
 
