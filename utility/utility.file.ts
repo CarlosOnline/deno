@@ -1,3 +1,5 @@
+import { logger } from "./utility.log.ts";
+
 export default class File {
   static exists(filePath: string) {
     try {
@@ -100,6 +102,26 @@ export default class File {
 
   static writeFile(filePath: string, contents: string): void {
     Deno.writeTextFileSync(filePath, contents);
+  }
+
+  static readTextFile(filePath: string): string {
+    return Deno.readTextFileSync(filePath);
+  }
+
+  static writeTextFile(
+    filePath: string,
+    data: string,
+    options?: Deno.WriteFileOptions
+  ) {
+    Deno.writeTextFile(filePath, data, options);
+  }
+
+  static deleteFile(filePath: string) {
+    try {
+      Deno.removeSync(filePath);
+    } catch (err) {
+      logger.error(`Error deleting file: ${filePath} - ${err}`);
+    }
   }
 
   static async folderSize(folder: string, recursive = true) {

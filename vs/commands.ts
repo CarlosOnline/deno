@@ -1,9 +1,9 @@
-import { action } from "../support/index.ts";
+import { command } from "../support/index.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
 
 export default class VisualStudioCommands {
-  @action("clean_obj_dirs", "Clean obj bin .vs folders")
+  @command("clean_obj_dirs", "Clean obj bin .vs folders")
   cleanObjDirs(folder = Deno.cwd(), confirmDelete = false) {
     console.log("Searching", folder);
 

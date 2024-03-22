@@ -9,6 +9,12 @@ import {
 import Utility from "./utility.ts";
 
 export default class Log {
+  static trace(...args: any[]) {
+    const message = args.join(" ");
+    const text = new TextEncoder().encode(message);
+    Deno.writeAllSync(Deno.stdout, text);
+  }
+
   static info(...args: any[]) {
     const message = args.join(" ");
     console.log(cyan(message));

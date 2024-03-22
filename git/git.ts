@@ -278,6 +278,16 @@ export class Git {
     await this.runAsync("reset --hard".split(" "), folder);
   }
 
+  /**
+   * Delete a branch both locally and remotely
+   */
+  async deleteBranch(branch: string, folder: string = Deno.cwd()) {
+    const force = Options.force ? " --force" : "";
+    await this.runAsync(`branch --delete${force} ${branch}`.split(" "), folder);
+
+    await this.runAsync(`push origin --delete ${branch}`.split(" "), folder);
+  }
+
   async status(folder: string = Deno.cwd()): Promise<string[]> {
     const config = this.config(folder);
     if (!config) return [];
@@ -320,10 +330,19 @@ export class Git {
 
     const deleteBranches = [...mergedBranches, ...localBranches].filter(
       (branch) => {
-        return !isSpecialBranch(branch, info) && !info.remotes.includes(branch);
+        return (
+          info.branch != branch &&
+          !isSpecialBranch(branch, info) &&
+          !info.remotes.includes(branch)
+        );
       }
     );
     if (!deleteBranches.length) return;
+
+    Utility.forEachParallel(deleteBranches, async (branch) => {
+      await this.runAsync(`branch -D ${branch}`.split(" "), folder);
+    });
+
     await this.deleteBranches(deleteBranches, folder);
   }
 
@@ -361,7 +380,10 @@ export class Git {
     if (!proceed) return;
 
     await Utility.forEachParallel(branches, async (branch) => {
-      await this.runAsync(`branch -D ${branch}`.split(" "), folder);
+      await this.runAsync(
+        `branch --delete --force ${branch}`.split(" "),
+        folder
+      );
     });
   }
 

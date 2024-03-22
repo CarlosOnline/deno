@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { dirname } from "https://deno.land/std/path/mod.ts";
 import { logger } from "../utility/utility.log.ts";
+import Utility from "../utility/utility.ts";
 
 /*
 Typical found paths:
@@ -186,15 +187,13 @@ export class VisualStudioOptionsBuilder {
       const filePath = `${scriptFolder}/env/options.vs.json`;
 
       const json = JSON.stringify(options, null, 2);
-      const encoder = new TextEncoder();
-      const data = encoder.encode(json);
 
       const folder = dirname(filePath);
       if (!directoryExists(folder)) {
         Deno.mkdirSync(folder);
       }
 
-      Deno.writeFileSync(filePath, data);
+      Utility.file.writeTextFile(filePath, json);
     }
   }
 }

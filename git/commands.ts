@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
+import "reflect-metadata";
 
-import { action } from "../support/index.ts";
+import { command } from "../support/index.ts";
 import Options from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
@@ -15,12 +16,12 @@ type GitUndoChanges = {
 };
 
 export default class GitCommands {
-  @action("create_pr", "Create pull request")
+  @command("create_pr", "Create pull request")
   async createPullRequest() {
     await GitCommands.runGitCommand(GitCommands.createPullRequest);
   }
 
-  @action("git.branch", "Get/Create branch")
+  @command("git.branch", "Get/Create branch")
   async getBranch() {
     if (Options.args.length == 1) {
       await GitCommands.runGitCommand(GitCommands.getBranch);
@@ -29,45 +30,64 @@ export default class GitCommands {
     }
   }
 
-  @action("git.branch_list", "Get/Create branch")
+  @command("git.delete_branch", "Delete branch")
+  async deleteBranch() {
+    const folder = Options.folder || Deno.cwd();
+    const branch = Options.branch || Options.args[1];
+
+    if (!branch) {
+      logger.error(`Missing branch name for ${folder}`);
+      return;
+    }
+
+    const git = new Git();
+    await git.deleteBranch(branch, folder);
+  }
+
+  @command("git.branch_list", "Get/Create branch")
   async getBranchList() {
     await GitCommands.runGitCommand(GitCommands.getBranchList);
   }
 
-  @action("git.info", "Get git info")
+  @command("git.clone", "Generate git clone commands")
+  async generateGitCloneCommands() {
+    await GitCommands.runGitCommand(GitCommands.generateGitCloneCommand);
+  }
+
+  @command("git.info", "Get git info")
   async info() {
     await GitCommands.runGitCommand(GitCommands.logInfo);
   }
 
-  @action("git.develop", "Checkout develop")
+  @command("git.develop", "Checkout develop")
   async checkoutDevelop() {
     await GitCommands.runGitCommand(GitCommands.checkoutDevelop);
   }
 
-  @action("git.merge", "Merge from develop")
+  @command("git.merge", "Merge from develop")
   async mergeFromDevelop() {
     await GitCommands.runGitCommand(GitCommands.mergeFromDevelopBranch);
   }
 
-  @action("git.prune", "Prune repositories")
+  @command("git.prune", "Prune repositories")
   async prune() {
     await GitCommands.runGitCommand(GitCommands.pruneRepo);
   }
 
-  @action("git.pull", "Pull repositories")
+  @command("git.pull", "Pull repositories")
   async pull() {
     await GitCommands.runGitCommand(GitCommands.pullRepo);
   }
 
-  @action("git.status", "Get status")
+  @command("git.status", "Get status")
   async status() {
-    await GitCommands.runGitCommand(GitCommands.statusOfRepo);
+    await GitCommands.runGitCommand(GitCommands.statusLogOfRepo);
   }
 
-  @action("git.undo", "Undo repositories")
+  @command("git.undo", "Undo repositories")
   async undo() {
     const undoChanges = <GitUndoChanges[]>(
-      await GitCommands.runGitCommand(GitCommands.getUndoChangesForRepo)
+      await GitCommands.runGitCommand(GitCommands.getStatusForRepo)
     );
 
     const pendingChanges = undoChanges.filter((item) => item.status.length > 0);
@@ -102,7 +122,7 @@ export default class GitCommands {
   }
 
   private static async runGitCommand(action: GitActionCallback) {
-    let folder = Options.folder || Deno.cwd();
+    const folder = Options.folder || Deno.cwd();
 
     if (Options.all) {
       return await GitCommands.forAllRepos(folder, action);
@@ -121,9 +141,15 @@ export default class GitCommands {
   private static async forAllRepos(folder: string, action: GitActionCallback) {
     const repos = GitCommands.getAllRepos(folder);
 
-    const tasks = repos.map((folder) => action(folder));
+    if (Options.sequential) {
+      Utility.forEachSequential(repos, async (repo) => {
+        await action(repo);
+      });
+    } else {
+      const tasks = repos.map((folder) => action(folder));
 
-    return await Promise.all(tasks);
+      return await Promise.all(tasks);
+    }
   }
 
   private static async checkoutBranch(folder: string) {
@@ -221,11 +247,22 @@ export default class GitCommands {
     if (!Options.test) {
       Utility.run.runAsync(Options.chrome, [url], folder, {
         skipEscape: true,
-        noWait: true,
+        skipWait: true,
       });
     }
 
     logger.highlight(`Create PR ${info.branch} ${folder}`);
+  }
+
+  private static async generateGitCloneCommand(folder: string) {
+    const git = new Git();
+    const info = git.config(folder);
+    if (!info) {
+      return;
+    }
+
+    const url = info.url;
+    logger.info(`git clone ${url}`);
   }
 
   private static async mergeFromDevelopBranch(folder: string) {
@@ -294,7 +331,11 @@ export default class GitCommands {
     logger.highlight(`Pulled ${folder}`);
   }
 
-  private static async statusOfRepo(folder: string) {
+  /**
+   * Log status of repo
+   * @param folder folder
+   */
+  private static async statusLogOfRepo(folder: string) {
     logger.highlight(`status ${folder}`);
 
     const git = new Git();
@@ -309,7 +350,12 @@ export default class GitCommands {
     logger.highlight(`Statused ${folder}`);
   }
 
-  private static async getUndoChangesForRepo(folder: string) {
+  /**
+   * Get changed files for repo.  git status -s
+   * @param folder folder
+   * @returns list of changed files
+   */
+  private static async getStatusForRepo(folder: string) {
     const git = new Git();
     const config = git.config(folder);
     if (!config) {

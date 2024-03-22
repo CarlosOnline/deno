@@ -5,7 +5,7 @@ import { logger } from "./utility.log.ts";
 export interface RunOptions {
   verbose?: boolean;
   capture?: boolean;
-  noWait?: boolean;
+  skipWait?: boolean;
   async?: boolean;
   skipEscape?: boolean;
   skipDiagnostics?: boolean;
@@ -14,7 +14,7 @@ export interface RunOptions {
 export const DefaultRunOptions: RunOptions = {
   verbose: false,
   capture: false,
-  noWait: false,
+  skipWait: false,
   async: false,
   skipEscape: false,
   skipDiagnostics: false,
@@ -43,12 +43,13 @@ export default class Run {
     const cmdOptions = Run.getRunOptions(args, folder, runOptions);
     const commander = new Deno.Command(cmd, cmdOptions);
 
-    if (!runOptions.noWait) {
-      const results = commander.outputSync();
-      return Run.procesRun(results, runOptions, cmd, args);
-    } else {
+    if (runOptions.skipWait) {
+      Run.runInBackgroundNoWait(commander);
       return "";
     }
+
+    const results = commander.outputSync();
+    return Run.extractProcessOutput(results, runOptions, cmd, args);
   }
 
   static async runAsync(
@@ -71,12 +72,31 @@ export default class Run {
     const cmdOptions = Run.getRunOptions(args, folder, runOptions);
     const commander = new Deno.Command(cmd, cmdOptions);
 
-    if (!runOptions.noWait) {
-      const results = await commander.output();
-      return Run.procesRun(results, runOptions, cmd, args);
-    } else {
+    if (runOptions.skipWait) {
+      Run.runInBackgroundNoWait(commander);
       return "";
     }
+
+    const results = await commander.output();
+    return Run.extractProcessOutput(results, runOptions, cmd, args);
+  }
+
+  /**
+   * Run process in background, Deno doesn't wait for it to finish.
+   * See https://github.com/denoland/deno/issues/21446
+   * @param commander Deno.Command object
+   */
+  private static runInBackgroundNoWait(commander: Deno.Command) {
+    // Run process in background, Deno doesn't wait for it to finish.
+    // TODO: get it to work with Windows, currently it closes the process.
+    const process = commander.spawn();
+    setTimeout(() => {
+      // TODO: process.unref();
+      logger.error(
+        "runInBackgroundNoWait: Background process started, exiting Deno."
+      );
+      Deno.exit(0);
+    }, 1500);
   }
 
   private static getRunOptions(
@@ -108,7 +128,7 @@ export default class Run {
     return options;
   }
 
-  private static procesRun(
+  private static extractProcessOutput(
     results: Deno.CommandOutput,
     runOptions: RunOptions,
     cmd: string,

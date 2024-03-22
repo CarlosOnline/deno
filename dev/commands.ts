@@ -1,10 +1,11 @@
-import { action } from "../support/index.ts";
+import { command } from "../support/index.ts";
 import Options, { TokenData } from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Utility from "../utility/utility.ts";
+import Token from "./token.ts";
 
 export default class DevCommands {
-  @action("deploy", "Deploy to dev", [
+  @command("deploy", "Deploy to dev", [
     "deploy https://artifactory-wdc.company.com/artifactory/rca-ce-helm/XXXX-api/XXX-api-2.1.7-beta.40.tgz",
   ])
   async deploy() {
@@ -48,7 +49,7 @@ export default class DevCommands {
     }
   }
 
-  @action("token", "Get authorization token", [
+  @command("token", "Get authorization token", [
     "token",
     "token api-name environment",
     "token spotcheck-UAT",
@@ -63,48 +64,22 @@ export default class DevCommands {
       return;
     }
 
-    const formBody: string[] = [];
-    (<string[][]>tokenData.body).forEach((pair) => {
-      const encodedKey = encodeURIComponent(pair[0]);
-      const encodedValue = encodeURIComponent(pair[1]);
-      formBody.push(encodedKey + "=" + encodedValue);
-    });
+    const service = new Token();
+    const token = await service.token(tokenData);
 
-    console.log(tokenData);
-    const formBodyJson = formBody.join("&");
-    const resp = await fetch(tokenData.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formBodyJson,
-    });
-
-    if (!resp.ok) {
-      logger.error(
-        `Fetch token failed ${resp.status} ${resp.statusText} for ${tokenData.url}`
-      );
-      return null;
-    }
-
-    const body = await resp.json();
-    const token = body.access_token;
     logger.info(token);
 
     await Utility.copyTextToClipboard(token);
 
     if (tokenData.outputFilePath) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(token);
-      Deno.writeFileSync(tokenData.outputFilePath, data);
-      logger.info();
+      Utility.file.writeTextFile(tokenData.outputFilePath, token);
       logger.info(`Generated ${tokenData.outputFilePath}`);
     }
 
     return token;
   }
 
-  @action("test", "test")
+  @command("test", "test")
   testMethod() {
     logger.info("Test method called");
   }
