@@ -27,20 +27,20 @@ export function command(
 
 export class CommandRunner {
   public static async run(name: string) {
-    const action = CommandTargets.find((target) => {
+    const command = CommandTargets.find((target) => {
       const names = Reflect.getMetadata("names", target);
       const idxName = names.indexOf(name);
       return idxName != -1;
     });
 
-    if (!action) {
+    if (!command) {
       logger.error(`Missing action ${name}`);
       CommandRunner.usage();
       return;
     }
 
     logger.info(`Running ${name}`);
-    await action.target();
+    await command();
   }
 
   public static usage() {

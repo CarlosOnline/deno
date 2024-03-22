@@ -44,8 +44,7 @@ export default class Run {
     const commander = new Deno.Command(cmd, cmdOptions);
 
     if (runOptions.skipWait) {
-      // Run process async in background.
-      commander.output();
+      Run.runInBackgroundNoWait(commander);
       return "";
     }
 
@@ -73,17 +72,31 @@ export default class Run {
     const cmdOptions = Run.getRunOptions(args, folder, runOptions);
     const commander = new Deno.Command(cmd, cmdOptions);
 
-    if (!runOptions.skipWait) {
-      const results = await commander.output();
-      return Run.extractProcessOutput(results, runOptions, cmd, args);
-    } else {
-      setTimeout(async () => {
-        const results = await commander.output();
-        return Run.extractProcessOutput(results, runOptions, cmd, args);
-      }, 10);
-
+    if (runOptions.skipWait) {
+      Run.runInBackgroundNoWait(commander);
       return "";
     }
+
+    const results = await commander.output();
+    return Run.extractProcessOutput(results, runOptions, cmd, args);
+  }
+
+  /**
+   * Run process in background, Deno doesn't wait for it to finish.
+   * See https://github.com/denoland/deno/issues/21446
+   * @param commander Deno.Command object
+   */
+  private static runInBackgroundNoWait(commander: Deno.Command) {
+    // Run process in background, Deno doesn't wait for it to finish.
+    // TODO: get it to work with Windows, currently it closes the process.
+    const process = commander.spawn();
+    setTimeout(() => {
+      // TODO: process.unref();
+      logger.error(
+        "runInBackgroundNoWait: Background process started, exiting Deno."
+      );
+      Deno.exit(0);
+    }, 1500);
   }
 
   private static getRunOptions(
