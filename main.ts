@@ -2,6 +2,7 @@ import { CommandRunner } from "./support/commands.ts";
 import { logger } from "./utility/index.ts";
 import Options from "./support/options.ts";
 
+import ClubCommands from "./club/commands.ts";
 import DevCommands from "./dev/commands.ts";
 import GitCommands from "./git/commands.ts";
 import MvnCommands from "./mvn/commands.ts";
@@ -11,6 +12,7 @@ import SystemCommands from "./system/commands.ts";
 import TestCommands from "./test.ts";
 import VisualStudioCommands from "./vs/commands.ts";
 
+new ClubCommands();
 new DevCommands();
 new GitCommands();
 new MvnCommands();
