@@ -1,6 +1,5 @@
 import { command } from "../support/index.ts";
-import { logger } from "../utility/index.ts";
-import Utility from "../utility/utility.ts";
+import { logger, Utility } from "../utility/index.ts";
 
 export default class VisualStudioCommands {
   @command("clean_obj_dirs", "Clean obj bin .vs folders")

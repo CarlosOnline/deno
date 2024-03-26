@@ -1,7 +1,6 @@
 import { command } from "../support/index.ts";
-import Options, { TokenData } from "../support/options.ts";
-import { logger } from "../utility/index.ts";
-import Utility from "../utility/utility.ts";
+import Options from "../support/options.ts";
+import { logger, Utility } from "../utility/index.ts";
 import Token from "./token.ts";
 
 export default class DevCommands {

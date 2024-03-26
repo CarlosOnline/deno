@@ -4,3 +4,4 @@ export * from "./utility.file.ts";
 export * from "./utility.path.ts";
 export * from "./utility.random.ts";
 export * from "./utility.run.ts";
+export * from "./utility.url.ts";

@@ -1,6 +1,5 @@
 import Options from "../support/options.ts";
-import Utility from "./utility.ts";
-import { logger } from "./utility.log.ts";
+import { logger, Utility } from "./index.ts";
 
 export interface RunOptions {
   verbose?: boolean;
@@ -22,7 +21,7 @@ export const DefaultRunOptions: RunOptions = {
 
 declare type RunPipe = "inherit" | "piped" | "null" | number;
 
-export default class Run {
+export class Run {
   static run(
     cmd: string,
     args: string[],

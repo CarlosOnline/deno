@@ -5,8 +5,7 @@ import { command } from "../support/index.ts";
 import { Perf, PerfResult } from "./perf.ts";
 
 import { PerfCsvParser } from "./perf-csv-parser.ts";
-import Utility from "../utility/utility.ts";
-import { logger } from "../utility/utility.log.ts";
+import { logger, Utility } from "../utility/index.ts";
 
 export default class PerfCommands {
   @command("perf.test", "Test perf")

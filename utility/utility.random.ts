@@ -1,4 +1,4 @@
-export default class Random {
+export class Random {
   /**
    * The maximum is exclusive and the minimum is inclusive
    */

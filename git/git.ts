@@ -1,7 +1,6 @@
 import Options from "../support/options.ts";
 import { DefaultRunOptions, RunOptions } from "../utility/index.ts";
-import { logger } from "../utility/utility.log.ts";
-import Utility from "../utility/utility.ts";
+import { logger, Utility } from "../utility/index.ts";
 
 export interface Config {
   branch: string;

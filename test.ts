@@ -2,7 +2,7 @@
 import { Git } from "./git/index.ts";
 import { command } from "./support/index.ts";
 import Options from "./support/options.ts";
-import Utility from "./utility/utility.ts";
+import { Utility } from "./utility/index.ts";
 
 export default class TestCommands {
   @command("tests", "Tests")

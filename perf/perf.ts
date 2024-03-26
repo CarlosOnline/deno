@@ -2,26 +2,15 @@
 import Token from "../dev/token.ts";
 import { Sql } from "../sql/sql.ts";
 import Options from "../support/options.ts";
-import { logger } from "../utility/index.ts";
-import Utility from "../utility/utility.ts";
+import { FetchResponse, logger, Url, Utility } from "../utility/index.ts";
 
 const OneSecondMs = 1000; // 1 second
-const MaxDurationSeconds = 30;
-const MaxDuration = MaxDurationSeconds * OneSecondMs;
 
 type PerfEndpoint = {
   url: string;
   method: string;
   payload: any;
   delay: number;
-};
-
-type FetchResponse = {
-  status: number;
-  statusText: string;
-  error: string | null;
-  body: string | null;
-  bodyLength: number | undefined;
 };
 
 export type PerfResult = {
@@ -47,11 +36,6 @@ function toDurationStringRaw(duration: number) {
 function toDurationString(duration: number) {
   const value = toDurationStringRaw(duration);
   return value.padStart(10, " ");
-}
-
-function getEndpoint(url: string) {
-  const parts = url.split("?")[0].split("/");
-  return parts[parts.length - 1];
 }
 
 function int(value: number) {
@@ -136,7 +120,7 @@ export class Perf {
     const results = await Promise.all(tasks);
 
     await this.reportResults(results);
-    this.writePerResults(results);
+    this.writePerfResults(results);
   }
 
   private async reportResults(results: PerfResult[]) {
@@ -181,7 +165,7 @@ EXEC [Perf].[PerfDataCreate] @Request
     }
   }
 
-  private writePerResults(results: PerfResult[]) {
+  private writePerfResults(results: PerfResult[]) {
     const folder = PerfFolder;
     Utility.path.ensure_directory(folder);
 
@@ -301,7 +285,7 @@ EXEC [Perf].[PerfDataCreate] @Request
     return <PerfResult>{
       status: results.status,
       method: endpoint.method,
-      endpoint: getEndpoint(endpoint.url),
+      endpoint: Url.getEndpoint(endpoint.url),
       url: endpoint.url,
       duration,
       startTime: now,
@@ -325,6 +309,10 @@ EXEC [Perf].[PerfDataCreate] @Request
     const service = new Token();
     const tokenData = Options.tokens[Options.perf.token];
     const token = await service.token(tokenData);
+    if (!token) {
+      logger.error("Failed to get token");
+      throw new Error("Failed to get token");
+    }
     return token;
   }
 }

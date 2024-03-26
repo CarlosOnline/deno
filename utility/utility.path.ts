@@ -4,9 +4,9 @@ import { basename } from "https://deno.land/std@0.184.0/path/mod.ts";
 
 const { mkdirSync, removeSync } = Deno;
 
-import Utility from "./utility.ts";
+import { Utility } from "./utility.ts";
 
-export default class Path {
+export class Path {
   static basename(filePath: string) {
     return basename(filePath);
   }

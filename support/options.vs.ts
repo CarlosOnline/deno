@@ -1,7 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { dirname } from "https://deno.land/std/path/mod.ts";
-import { logger } from "../utility/utility.log.ts";
-import Utility from "../utility/utility.ts";
+import { logger, Utility } from "../utility/index.ts";
 
 /*
 Typical found paths:

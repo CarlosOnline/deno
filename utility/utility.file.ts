@@ -1,6 +1,6 @@
 import { logger } from "./utility.log.ts";
 
-export default class File {
+export class File {
   static exists(filePath: string) {
     try {
       Deno.statSync(filePath);

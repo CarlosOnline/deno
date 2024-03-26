@@ -1,5 +1,5 @@
 import Papa from "papaparse";
-import Utility from "../utility/utility.ts";
+import { Utility } from "../utility/index.ts";
 
 export class PerfCsvParser {
   parseCsv(filePath: string): string[][] {

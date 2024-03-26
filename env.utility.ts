@@ -1,4 +1,4 @@
-import Utility from "./utility.ts";
+import { Utility } from "./utility/index.ts";
 
 export class EnvUtility {
   static get_alias_file(out: any) {

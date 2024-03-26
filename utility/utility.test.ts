@@ -1,9 +1,6 @@
-import {
-  assertEquals,
-  assertStrictEq,
-} from "https://deno.land/std/testing/asserts.ts";
+import { assertStrictEq } from "https://deno.land/std/testing/asserts.ts";
 
-import Utility from "./utility.ts";
+import { Utility } from "./utility.ts";
 
 Deno.test("Utility.info", function (): void {
   Utility.info("Test message");
