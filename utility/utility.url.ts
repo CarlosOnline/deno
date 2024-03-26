@@ -5,7 +5,8 @@ export type FetchResponse = {
   ok: boolean;
   status: number;
   statusText: string;
-  error?: string | null;
+  error?: string;
+  errorMessage?: string;
   body?: string | null;
   bodyLength?: number | undefined;
 };
@@ -29,7 +30,12 @@ export class Url {
     };
 
     if (Options.test || Options.dryRun) {
-      return response;
+      return {
+        ok: true,
+        status: 200,
+        statusText: "Dry Run",
+        error: "",
+      };
     }
 
     const headers = getHeaders();
@@ -43,10 +49,10 @@ export class Url {
     const url = Url.getFetchUrl(endpoint);
     if (Options.verbose) {
       logger.info(`Fetch ${url}`);
+      console.log(endpoint);
     }
 
     try {
-      await fetch(url, params);
       const resp = await fetch(url, params);
 
       response.ok = resp.ok;
@@ -59,11 +65,12 @@ export class Url {
         );
       }
 
+      const body = await getBodyFromResponse(resp);
+
       if (resp.ok) {
-        const body = await resp.text();
         const responseContentType = resp.headers.get("Content-Type") || "";
         if (responseContentType) {
-          response.error = body?.length > 0 ? null : "Empty body";
+          response.error = body?.length > 0 ? "" : "Empty body";
         } else {
           response.error = "";
         }
@@ -71,14 +78,19 @@ export class Url {
         response.body = body;
         response.bodyLength = body?.length;
       } else {
-        logger.error(
-          `Fetch failed ${resp.status} ${resp.statusText} for ${url}`
-        );
+        response.error = body || resp.statusText || "Unknown error";
       }
     } catch (error) {
-      logger.error(`Fetch failed ${error} for ${url}`);
       response.error =
         error.toString().replace(/,/g, "-") || "Unknown exception";
+    }
+
+    response.errorMessage = Url.getErrorMessage(response.error);
+
+    if (response.error) {
+      logger.error(
+        `\nFetch failed ${response.status} ${response.statusText} for ${url}\nError: ${response.errorMessage}`
+      );
     }
 
     return response;
@@ -93,6 +105,15 @@ export class Url {
         headers["Authorization"] = `Bearer ${token}`;
       }
       return headers;
+    }
+
+    async function getBodyFromResponse(response: Response) {
+      try {
+        return await response.text();
+      } catch (error) {
+        logger.error(`Failed to get body from response ${error}`);
+      }
+      return "";
     }
   }
 
@@ -152,5 +173,18 @@ export class Url {
 
     const hostUrl = endpoint.hostUrl;
     return hostUrl + "/" + endpoint.endpoint + paramUrl;
+  }
+
+  static getErrorMessage(error?: string) {
+    if (!error) return "";
+
+    try {
+      const errorInfo = JSON.parse(error);
+      return errorInfo.message || error;
+    } catch {
+      // ignored
+    }
+
+    return error;
   }
 }

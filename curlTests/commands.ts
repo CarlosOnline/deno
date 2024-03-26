@@ -19,7 +19,7 @@ export default class CurlCommands {
 
     await runner.run(Options.args[1]);
 
-    console.log("completed");
+    logger.info("completed");
   }
 
   @command("curl.list", "List curl commands from specified folder or file", [
@@ -33,6 +33,6 @@ export default class CurlCommands {
 
     await runner.list(Options.args[1]);
 
-    console.log("completed");
+    logger.info("completed");
   }
 }

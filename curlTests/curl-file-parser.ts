@@ -4,6 +4,7 @@ import { Utility, Url, UrlInfo } from "../utility/index.ts";
 export class CurlFileParser {
   parseCurlFile(filePath: string) {
     return this.getCurlCommandLinesFromFile(filePath)
+      .map((command) => this.replaceWithValues(command))
       .map((command) => this.getCurlInfo(command))
       .filter((item) => item !== null) as UrlInfo[];
   }
@@ -37,8 +38,7 @@ export class CurlFileParser {
       idx = contents.indexOf("curl", idx + 1);
     }
 
-    const end = contents.length - 1;
-    const command = contents.substring(previousIdx, end);
+    const command = contents.substring(previousIdx, contents.length);
     sections.push(command);
 
     return sections;
@@ -56,6 +56,10 @@ export class CurlFileParser {
         );
       return lines.join(" ");
     });
+  }
+
+  private replaceWithValues(command: string) {
+    return command.replace("[UniqueId]", Utility.random.generateUUID());
   }
 
   private getCurlInfo(command: string): UrlInfo | null {

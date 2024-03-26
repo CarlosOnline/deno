@@ -61,6 +61,7 @@ export class CurlCommandRunner {
       const results = await this.runEndpoints(endpoints);
       logger.trace("\n");
       this.writeResults(results, filePath);
+      this.displayResults(results);
     });
   }
 
@@ -75,7 +76,10 @@ export class CurlCommandRunner {
       const endpoints = parser.parseCurlFile(filePath);
 
       endpoints.forEach((endpoint) => {
-        console.log(`${endpoint.method} ${endpoint.endpoint}`);
+        logger.info(`${endpoint.method} ${endpoint.endpoint}`);
+        if (Options.verbose) {
+          console.log(endpoint);
+        }
       });
     });
   }
@@ -120,11 +124,9 @@ export class CurlCommandRunner {
 
     const failed = !results.ok || results.error || !results.status;
     if (failed) {
-      logger.error(
-        `Failed: ${results.status} ${results.statusText} ${endpoint.method} ${endpoint.url} ${results.error}`
-      );
-
-      console.log(endpoint);
+      if (Options.verbose) {
+        console.log(endpoint);
+      }
     }
 
     this.stats.success += !failed ? 1 : 0;
@@ -224,5 +226,20 @@ export class CurlCommandRunner {
       ];
       return parts.join(",");
     }
+  }
+
+  private displayResults(results: CurlCommandResult[]) {
+    results.forEach((result) => {
+      const bodyStr = result.response.body?.substring(0, 30) || "";
+      logger.info(
+        `${result.response.status
+          .toLocaleString()
+          .padEnd(4)} ${result.response.statusText.padEnd(
+          25
+        )} ${result.urlInfo.method.padEnd(5)} ${result.urlInfo.endpoint.padEnd(
+          20
+        )} ${bodyStr} ${result.response.errorMessage}`
+      );
+    });
   }
 }
