@@ -3,6 +3,7 @@ import Token from "../dev/token.ts";
 import Options from "../support/options.ts";
 import { logger, Utility, Url, UrlInfo } from "../utility/index.ts";
 import { FetchResponse } from "../utility/utility.url.ts";
+import { CurlFileParser } from "./curl-file-parser.ts";
 
 const OneSecondMs = 1000; // 1 second
 
@@ -50,9 +51,8 @@ export class CurlCommandRunner {
   }
 
   public async run(filePath: string) {
-    const endpoints = this.getCurlCommandsFromFile(filePath)
-      .map((command) => this.getCurlInfo(command))
-      .filter((item) => item !== null) as UrlInfo[];
+    const parser = new CurlFileParser();
+    const endpoints = parser.parseCurlFile(filePath);
 
     await this.runEndpoints(endpoints);
   }
@@ -68,32 +68,31 @@ export class CurlCommandRunner {
         new Date().toLocaleString()
     );
 
+    const results = await this.runEndpointsWithTimer(endpoints, token);
+    this.writeResults(results);
+  }
+
+  private async runEndpointsWithTimer(endpoints: UrlInfo[], token: string) {
     if (Options.sequential) {
-      const results = await Utility.forEachSequential(
+      return await Utility.forEachSequential(
         endpoints,
         async (endpoint: UrlInfo) => await this.timeIt(endpoint, token)
       );
-      this.writeResults(results);
+    } else {
+      return await Promise.all(
+        endpoints.map((endpoint: UrlInfo) => this.timeIt(endpoint, token))
+      );
     }
-
-    const tasks = endpoints.map((endpoint: UrlInfo) =>
-      this.timeIt(endpoint, token)
-    );
-
-    const results = await Promise.all(tasks);
-    this.writeResults(results);
   }
 
   private async fetch(endpoint: UrlInfo, token: string) {
     this.stats.total++;
 
-    if (!Options.verbose) {
-      logger.trace(
-        `\r${int(this.stats.success)} / ${int(this.stats.total)} / ${int(
-          this.stats.failed
-        )}                         `
-      );
-    }
+    logger.trace(
+      `\r${int(this.stats.success)} / ${int(this.stats.total)} / ${int(
+        this.stats.failed
+      )}                         `
+    );
 
     const results = await Url.fetch(endpoint, token);
 
@@ -119,6 +118,19 @@ export class CurlCommandRunner {
   }
 
   private async timeIt(endpoint: UrlInfo, token: string) {
+    if (Options.test) {
+      console.log(endpoint);
+      return <CurlCommandResult>{
+        urlInfo: endpoint,
+        response: {},
+        duration: 0,
+        startTime: new Date(),
+        endTime: new Date(),
+        delay: 0,
+        envrionment: "",
+      };
+    }
+
     const now = new Date();
     const start = Date.now();
 
@@ -157,45 +169,6 @@ export class CurlCommandRunner {
     }
 
     return token;
-  }
-
-  private getCurlCommandsFromFile(filePath: string) {
-    const authHeaderValue = `-H 'Authorization: Bearer *******'`;
-
-    const pattern = /#.+[\r\n]+/;
-    return Utility.file
-      .readTextFile(filePath)
-      .split(pattern)
-      .map((section) => {
-        const lines = section
-          .split("\n")
-          .filter((line) => line.trim().length > 0)
-          .map((line) => line.trim())
-          .map((line) => line.replace(/\\/g, ""))
-          .map((line) => line.trim())
-          .map((line) =>
-            line.replace(/-H 'Authorization: Bearer.*/g, authHeaderValue)
-          );
-        return lines.join(" ");
-      });
-  }
-
-  private getCurlInfo(command: string): UrlInfo | null {
-    const pattern =
-      /curl\s+-X\s+'(?<method>[^']+)'\s+'(?<url>[^']*)'\s*(?<headers>((-H\s+'[^']+')\s*)*\s*)*(-d\s+'(?<payload>.+)')?/;
-    const match = command.match(pattern);
-    if (match?.groups) {
-      const groups = match.groups;
-
-      return Url.parseUrl(
-        groups.method,
-        groups.url,
-        groups.headers,
-        groups.payload
-      );
-    }
-
-    return null;
   }
 
   private writeResults(results: CurlCommandResult[]) {
