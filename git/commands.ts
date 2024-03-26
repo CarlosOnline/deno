@@ -243,7 +243,7 @@ export default class GitCommands {
     const url = `${Options.projects.git}/repos/${info.repo}/pull-requests?create&sourceBranch=refs/heads/${info.branch}&targetBranch=${info.develop}`;
     console.log(url);
 
-    if (!Options.test) {
+    if (!Options.test || Options.dryRun) {
       Utility.run.runAsync(Options.chrome, [url], folder, {
         skipEscape: true,
         skipWait: true,

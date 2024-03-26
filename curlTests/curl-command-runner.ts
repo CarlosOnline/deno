@@ -7,8 +7,6 @@ import { CurlFileParser } from "./curl-file-parser.ts";
 
 const OneSecondMs = 1000; // 1 second
 
-const ResultsFolder = "c:\\temp\\curl";
-
 export interface CurlTestsEndpoint extends UrlInfo {
   delay: number;
 }
@@ -50,11 +48,36 @@ export class CurlCommandRunner {
     this.iteration = 0;
   }
 
-  public async run(filePath: string) {
+  public async run(fileOrFolderPath: string) {
     const parser = new CurlFileParser();
-    const endpoints = parser.parseCurlFile(filePath);
 
-    await this.runEndpoints(endpoints);
+    const files = Utility.file.isFolder(fileOrFolderPath)
+      ? Utility.file.listFiles(fileOrFolderPath)
+      : [fileOrFolderPath];
+
+    await Utility.forEachSequential(files, async (filePath) => {
+      logger.info(`Running ${filePath}`);
+      const endpoints = parser.parseCurlFile(filePath);
+      const results = await this.runEndpoints(endpoints);
+      logger.trace("\n");
+      this.writeResults(results, filePath);
+    });
+  }
+
+  public list(fileOrFolderPath: string) {
+    const files = Utility.file.isFolder(fileOrFolderPath)
+      ? Utility.file.listFiles(fileOrFolderPath)
+      : [fileOrFolderPath];
+
+    const parser = new CurlFileParser();
+    files.forEach((filePath) => {
+      logger.info(`Processing ${filePath}`);
+      const endpoints = parser.parseCurlFile(filePath);
+
+      endpoints.forEach((endpoint) => {
+        console.log(`${endpoint.method} ${endpoint.endpoint}`);
+      });
+    });
   }
 
   private async runEndpoints(endpoints: UrlInfo[]) {
@@ -68,19 +91,18 @@ export class CurlCommandRunner {
         new Date().toLocaleString()
     );
 
-    const results = await this.runEndpointsWithTimer(endpoints, token);
-    this.writeResults(results);
+    return await this.runEndpointsWithTimer(endpoints, token);
   }
 
   private async runEndpointsWithTimer(endpoints: UrlInfo[], token: string) {
-    if (Options.sequential) {
+    if (Options.parallel) {
+      return await Promise.all(
+        endpoints.map((endpoint: UrlInfo) => this.timeIt(endpoint, token))
+      );
+    } else {
       return await Utility.forEachSequential(
         endpoints,
         async (endpoint: UrlInfo) => await this.timeIt(endpoint, token)
-      );
-    } else {
-      return await Promise.all(
-        endpoints.map((endpoint: UrlInfo) => this.timeIt(endpoint, token))
       );
     }
   }
@@ -118,19 +140,6 @@ export class CurlCommandRunner {
   }
 
   private async timeIt(endpoint: UrlInfo, token: string) {
-    if (Options.test) {
-      console.log(endpoint);
-      return <CurlCommandResult>{
-        urlInfo: endpoint,
-        response: {},
-        duration: 0,
-        startTime: new Date(),
-        endTime: new Date(),
-        delay: 0,
-        envrionment: "",
-      };
-    }
-
     const now = new Date();
     const start = Date.now();
 
@@ -171,8 +180,8 @@ export class CurlCommandRunner {
     return token;
   }
 
-  private writeResults(results: CurlCommandResult[]) {
-    const folder = ResultsFolder;
+  private writeResults(results: CurlCommandResult[], sourceFilePath: string) {
+    const folder = Utility.path.getFolder(sourceFilePath) + "\\results";
     Utility.path.ensure_directory(folder);
 
     const allResultsCsvFilePath = `${folder}\\results.csv`;
@@ -185,6 +194,16 @@ export class CurlCommandRunner {
         create: true,
       }
     );
+
+    const resultsFileName = Utility.path.getFileName(sourceFilePath);
+    const resultsJsonFile = `${folder}\\${resultsFileName}.json`;
+
+    Utility.file.writeTextFile(
+      resultsJsonFile,
+      JSON.stringify(results, null, 3)
+    );
+
+    logger.info(`Generated ${resultsJsonFile}`);
 
     function toCsvLine(item: CurlCommandResult): string {
       const startTime = item.startTime.toISOString();

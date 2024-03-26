@@ -1,15 +1,5 @@
 import Options from "../support/options.ts";
-import { logger } from "./index.ts";
-
-export type UrlInfo = {
-  method: string;
-  hostUrl: string;
-  endpoint: string;
-  params: Dict;
-  headers: Dict;
-  payload?: string;
-  url: string;
-};
+import { logger, UrlInfo } from "./index.ts";
 
 export type FetchResponse = {
   ok: boolean;
@@ -27,15 +17,7 @@ export class Url {
     headers?: string,
     payload?: string
   ): UrlInfo {
-    return {
-      method: method,
-      hostUrl: Url.getHostUrl(url),
-      endpoint: Url.getEndpoint(url),
-      params: Url.getParams(url),
-      url,
-      headers: Url.getHeaders(headers || ""),
-      payload: payload ? JSON.parse(payload) : null,
-    };
+    return new UrlInfo(method, url, headers, payload);
   }
 
   static async fetch(endpoint: UrlInfo, token: string): Promise<FetchResponse> {
@@ -45,6 +27,10 @@ export class Url {
       statusText: "Unknown error",
       error: "Unknown error",
     };
+
+    if (Options.test || Options.dryRun) {
+      return response;
+    }
 
     const headers = getHeaders();
 
@@ -82,6 +68,7 @@ export class Url {
           response.error = "";
         }
 
+        response.body = body;
         response.bodyLength = body?.length;
       } else {
         logger.error(
@@ -163,7 +150,7 @@ export class Url {
 
     const paramUrl = params ? `?${params}` : "";
 
-    const hostUrl = Options.hostUrl || endpoint.hostUrl;
+    const hostUrl = endpoint.hostUrl;
     return hostUrl + "/" + endpoint.endpoint + paramUrl;
   }
 }

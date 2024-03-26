@@ -28,6 +28,14 @@ export class File {
     }
   }
 
+  static isFile(filePath: string) {
+    return this.fileExists(filePath);
+  }
+
+  static isFolder(filePath: string) {
+    return this.directoryExists(filePath);
+  }
+
   static listDirectories(folder: string, recursive = false) {
     const results: string[] = [];
 

@@ -83,7 +83,7 @@ export default class SystemCommands {
     if (commands.isEmptyFolder(folder)) {
       //logger.info(`dir /b /a-d "${folder.replace("/", "\\")}"`);
 
-      if (!Options.test) {
+      if (!Options.test || Options.dryRun) {
         const contents = Utility.file.listDirectoryContents(folder, true);
         if (contents.length == 0) {
           logger.warn(`rd "${folder.replace("/", "\\")}"`);

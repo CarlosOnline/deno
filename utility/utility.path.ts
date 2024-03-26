@@ -11,7 +11,15 @@ export class Path {
     return basename(filePath);
   }
 
+  static getFileName(filePath: string) {
+    return basename(filePath);
+  }
+
   static dirname(filePath: string) {
+    return dirname(filePath);
+  }
+
+  static getFolder(filePath: string) {
     return dirname(filePath);
   }
 

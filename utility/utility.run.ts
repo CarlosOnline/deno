@@ -33,7 +33,7 @@ export class Run {
       logger.info(`${exe} ${args.join(" ")}`);
     }
 
-    if (Options.test) {
+    if (Options.test || Options.dryRun) {
       const exe = Utility.path.basename(cmd);
       logger.info(`${exe} ${args.join(" ")}`);
       return "";
@@ -62,7 +62,7 @@ export class Run {
       logger.info(`${exe} ${args.join(" ")}`);
     }
 
-    if (Options.test) {
+    if (Options.test || Options.dryRun) {
       const exe = Utility.path.basename(cmd);
       logger.info(`${exe} ${args.join(" ")}`);
       return "";
