@@ -2,12 +2,18 @@
   "version": "3",
   "packages": {
     "specifiers": {
+      "npm:@types/lodash@^4.17.0": "npm:@types/lodash@4.17.0",
       "npm:@types/papaparse@^5.3.14": "npm:@types/papaparse@5.3.14",
+      "npm:lodash@^4.17.21": "npm:lodash@4.17.21",
       "npm:moment@^2.30.1": "npm:moment@2.30.1",
       "npm:papaparse@^5.4.1": "npm:papaparse@5.4.1",
       "npm:reflect-metadata@^0.2.1": "npm:reflect-metadata@0.2.1"
     },
     "npm": {
+      "@types/lodash@4.17.0": {
+        "integrity": "sha512-t7dhREVv6dbNj0q17X12j7yDG4bD/DHYX7o5/DbDxobP0HnGPgpRz2Ej77aL7TZT3DSw13fqUTj8J4mMnqa7WA==",
+        "dependencies": {}
+      },
       "@types/node@18.16.19": {
         "integrity": "sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==",
         "dependencies": {}
@@ -17,6 +23,10 @@
         "dependencies": {
           "@types/node": "@types/node@18.16.19"
         }
+      },
+      "lodash@4.17.21": {
+        "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
+        "dependencies": {}
       },
       "moment@2.30.1": {
         "integrity": "sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==",
@@ -137,7 +147,9 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@types/lodash@^4.17.0",
         "npm:@types/papaparse@^5.3.14",
+        "npm:lodash@^4.17.21",
         "npm:moment@^2.30.1",
         "npm:papaparse@^5.4.1",
         "npm:reflect-metadata@^0.2.1"
