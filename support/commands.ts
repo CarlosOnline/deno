@@ -8,7 +8,7 @@ export function command(
   name: string,
   description = "",
   examples: string[] = []
-) {
+): any {
   return function (
     target: any,
     // deno-lint-ignore no-unused-vars

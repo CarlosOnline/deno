@@ -59,7 +59,7 @@ export class CurlFileParser {
   }
 
   private replaceWithValues(command: string) {
-    return command.replace("[UniqueId]", Utility.random.generateUUID());
+    return command.replace(/\[UniqueId\]/g, Utility.random.generateUUID());
   }
 
   private getCurlInfo(command: string): UrlInfo | null {

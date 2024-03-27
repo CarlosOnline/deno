@@ -12,14 +12,12 @@ export default class PerfCommands {
   async test() {
     const service = new Perf();
     await service.test();
-    console.log("completed");
   }
 
   @command("perf.loop", "Perf loop")
   async prefLoop() {
     const service = new Perf();
     await service.loop(Options.interval || 5);
-    console.log("completed");
   }
 
   @command("perf.parse", "Parse perf csv")

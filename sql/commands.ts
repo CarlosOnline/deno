@@ -25,7 +25,6 @@ export default class SqlCommands {
     await Utility.forEachSequential(sqlFiles, (item) =>
       SqlCommands.executeFile(item)
     );
-    console.error("completed");
   }
 
   private static getSqlType(filePath: string) {

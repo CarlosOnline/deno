@@ -59,8 +59,13 @@ export class CurlCommandRunner {
       logger.info(`Running ${filePath}`);
       const endpoints = parser.parseCurlFile(filePath);
       const results = await this.runEndpoints(endpoints);
-      logger.trace("\n");
       this.writeResults(results, filePath);
+
+      const updateFilePath = `${Utility.path.getFolder(
+        filePath
+      )}\\Update\\${Utility.path.getFileName(filePath)}`;
+      this.generateUpdateCommand(results, updateFilePath);
+
       this.displayResults(results);
     });
   }
@@ -84,7 +89,101 @@ export class CurlCommandRunner {
     });
   }
 
+  public async update(filePath: string, outputFilePath: string) {
+    const parser = new CurlFileParser();
+
+    logger.info(`Processing ${filePath}`);
+
+    const endpoints = parser.parseCurlFile(filePath);
+    const results = await this.runEndpoints(endpoints);
+    this.writeResults(results, filePath);
+
+    this.generateUpdateCommand(results, outputFilePath);
+  }
+
+  private generateUpdateCommand(
+    results: CurlCommandResult[],
+    outputFilePath: string
+  ) {
+    const updatedEndpoints = results.map((result) => {
+      if (
+        result.urlInfo.method != "PUT" ||
+        !result.response.ok ||
+        !result.response.body?.startsWith("{")
+      ) {
+        return result.urlInfo;
+      }
+
+      if (!result.response.body?.startsWith("{")) return result.urlInfo;
+
+      result.urlInfo.payload = JSON.parse(result.response.body);
+
+      return result.urlInfo;
+    });
+
+    const output = this.generateCurlCommandsOutput(updatedEndpoints);
+
+    Utility.path.ensure_directory(Utility.path.getFolder(outputFilePath));
+    Utility.file.writeTextFile(outputFilePath, output);
+    logger.info(`Generated ${outputFilePath}`);
+  }
+
+  private generateCurlCommandsOutput(endpoints: UrlInfo[]) {
+    const results: string[] = [];
+    endpoints.forEach((endpoint) => {
+      const beginning = [
+        `curl -X '${endpoint.method.toUpperCase()}' \\`,
+        `'${endpoint.url}' \\`,
+      ];
+
+      const headers = [];
+      for (const key in endpoint.headers) {
+        const value = endpoint.headers[key];
+        headers.push(`-H '${key}: ${value}' \\`);
+      }
+
+      const payload = !endpoint.payload ? [] : getPayloadJson();
+
+      const command = [...beginning, ...headers, ...payload];
+      const output = command
+        .map((line, index) => (index == 0 ? line : `  ${line}`))
+        .join("\r\n")
+        .replace(/\\$/, "");
+      results.push(output);
+
+      function getPayloadJson() {
+        const json = JSON.stringify(endpoint.payload, null, 2).split("\n");
+        return [...json, "'"].map((line, index) =>
+          index == 0 ? `-d '${line}` : `  ${line}`
+        );
+      }
+    });
+
+    return results.join("\r\n\r\n\r\n");
+  }
+
   private async runEndpoints(endpoints: UrlInfo[]) {
+    if (Options.dryRun) {
+      return endpoints.map((endpoint) => {
+        return <CurlCommandResult>{
+          urlInfo: endpoint,
+          response: {
+            ok: true,
+            status: 200,
+            statusText: "OK",
+            body: "",
+            bodyLength: 0,
+            errorMessage: "",
+          },
+          duration: 0,
+          startTime: new Date(),
+          endTime: new Date(),
+          delay: 0,
+          envrionment: "",
+        };
+      });
+    }
+
     const token = await this.getToken();
     this.iteration++;
 
@@ -95,7 +194,11 @@ export class CurlCommandRunner {
         new Date().toLocaleString()
     );
 
-    return await this.runEndpointsWithTimer(endpoints, token);
+    const results = await this.runEndpointsWithTimer(endpoints, token);
+
+    logger.trace("\n");
+
+    return results;
   }
 
   private async runEndpointsWithTimer(endpoints: UrlInfo[], token: string) {

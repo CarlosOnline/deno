@@ -2,7 +2,7 @@ import { CommandRunner } from "./support/commands.ts";
 import { logger } from "./utility/index.ts";
 import Options from "./support/options.ts";
 
-import CurlCommands from "./curlTests/commands.ts";
+import CurlCommands from "./curl/commands.ts";
 import DevCommands from "./dev/commands.ts";
 import GitCommands from "./git/commands.ts";
 import MvnCommands from "./mvn/commands.ts";

@@ -18,8 +18,6 @@ export default class CurlCommands {
     }
 
     await runner.run(Options.args[1]);
-
-    logger.info("completed");
   }
 
   @command("curl.list", "List curl commands from specified folder or file", [
@@ -32,7 +30,22 @@ export default class CurlCommands {
     }
 
     await runner.list(Options.args[1]);
+  }
 
-    logger.info("completed");
+  @command(
+    "curl.update",
+    "Generate update curl commands from specified folder or file. Use --dryRun to replace [UniqueId] only.",
+    [
+      "curl.update c:\\Temp\\Api\\tests.md c:\\Temp\\Api\\update.md",
+      "curl.update c:\\Temp\\Api\\tests.md c:\\Temp\\Api\\update.md --dryRun",
+    ]
+  )
+  async generateUpdateCommands() {
+    const runner = new CurlCommandRunner();
+    if (Options.args.length < 3) {
+      logger.fatal("Missing input and output file path");
+    }
+
+    await runner.update(Options.args[1], Options.args[2]);
   }
 }
