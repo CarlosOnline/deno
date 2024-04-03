@@ -42,7 +42,7 @@ export class Swagger {
   public groupByCategory(endpoints: SwaggerEndpoint[]) {
     return groupBy(
       endpoints,
-      (item) => `${item.endpointCategory}-${item.method}`
+      (item: SwaggerEndpoint) => `${item.endpointCategory}-${item.method}`
     );
   }
 

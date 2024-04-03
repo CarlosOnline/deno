@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
-import { Utility } from "../utility/index.ts";
+import Options from "../support/options.ts";
+import { Url, Utility } from "../utility/index.ts";
 
 export type SwaggerDef = {
   openApi: string;
@@ -54,5 +55,33 @@ export class SwaggerParser {
     const content = Utility.file.readTextFile(filePath);
     const swagger: SwaggerDef = JSON.parse(content);
     return swagger;
+  }
+
+  async parseSwaggerUrl(urlPath: string) {
+    const urlInfo = Url.parseUrl("GET", urlPath);
+    const response = await Url.fetch(urlInfo, "");
+    if (!response.ok || !response.body) {
+      throw new Error(`Error fetching swagger: ${response.error}`);
+    }
+
+    const swagger: SwaggerDef = JSON.parse(response.body);
+    return swagger;
+  }
+
+  async parseSwagger(path: string) {
+    if (Utility.file.fileExists(path)) {
+      return this.parseSwaggerFile(path);
+    }
+
+    if (path.startsWith("http")) {
+      return await this.parseSwaggerUrl(path);
+    }
+
+    const appUrl = Options.apps[path]?.url;
+    if (!appUrl) {
+      throw new Error(`Invalid path: ${path}`);
+    }
+
+    return await this.parseSwaggerUrl(`${appUrl.replace(/\/$/g)}/v3/api-docs`);
   }
 }

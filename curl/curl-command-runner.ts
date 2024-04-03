@@ -14,6 +14,7 @@ export interface CurlTestsEndpoint extends UrlInfo {
 export type CurlCommandResult = {
   urlInfo: UrlInfo;
   response: FetchResponse;
+  body: any;
   duration: number;
   startTime: Date;
   endTime: Date;
@@ -34,6 +35,17 @@ function toDurationString(duration: number) {
 
 function int(value: number) {
   return value.toLocaleString().padStart(10, " ");
+}
+
+function tryParse(value: string) {
+  try {
+    if (value) {
+      return JSON.parse(value);
+    }
+  } catch {
+    // ignored
+  }
+  return null;
 }
 
 export class CurlCommandRunner {
@@ -260,6 +272,7 @@ export class CurlCommandRunner {
     return <CurlCommandResult>{
       urlInfo: endpoint,
       response: results,
+      body: tryParse(results.body as string),
       duration,
       startTime: now,
       endTime: new Date(),

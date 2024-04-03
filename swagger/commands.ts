@@ -6,7 +6,11 @@ import { Swagger } from "./swagger.ts";
 import { logger } from "../utility/index.ts";
 
 export default class SwaggerCommands {
-  @command("swagger.list", "List all swagger endpoints")
+  @command("swagger.list", "List all swagger endpoints", [
+    "swagger.list ./path/to/swagger.json",
+    "swagger.list http://my-service/v3/api-docs",
+    "swagger.list my-app", // Looks up url from app configuration
+  ])
   async listEndpoints() {
     const runner = new Swagger();
     if (Options.args.length < 2) {

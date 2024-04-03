@@ -4,6 +4,7 @@ import {
   VisualStudioOptions,
   VisualStudioOptionsBuilder,
 } from "./options.vs.ts";
+import { EnvironmentToken, EnvironmentData, EnvironmentSql, EnvironmentApp } from "./environment.ts";
 
 export interface TokenDataBody {
   grant_type: string;
@@ -17,7 +18,7 @@ export interface TokenData {
   body: TokenDataBody;
 }
 
-export class DefaultOptions extends VisualStudioOptions {
+export class DefaultOptions extends VisualStudioOptions, EnvironmentOptionsData {
   [index: string]: any;
   // Environment file to load.
   env = "";
@@ -37,10 +38,22 @@ export class DefaultOptions extends VisualStudioOptions {
   };
   sqlcmd =
     '"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\SQLCMD.EXE"';
-  sql = {
+
+  // environment json loaded options
+  apps?: EnvironmentApp = {};
+  sql: EnvironmentSql = {
     server: "Default Server",
     database: "Default Database",
   };
+
+  token?: EnvironmentToken = {
+    token: "",
+    target: "",
+    url: "",
+    body: [],
+  };
+
+  projects: { [key: string]: string } = {};
 }
 
 type OptionsType = DefaultOptions | Record<string, any>;
@@ -73,7 +86,7 @@ class OptionsParser {
     const data = Deno.readFileSync(filePath);
     const decoder = new TextDecoder("utf-8");
     const contents = decoder.decode(data);
-    const settings = JSON.parse(contents);
+    const settings: EnvironmentData = JSON.parse(contents);
     Object.assign(Options, settings);
   }
 
