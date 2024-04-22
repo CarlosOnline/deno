@@ -24,6 +24,8 @@ export class DefaultOptions extends VisualStudioOptions, EnvironmentOptionsData 
   env = "";
   scriptFolder = "";
   args: string[] = [];
+  brave = `${Deno.env.get("USERPROFILE")}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;
+  browser = `${Deno.env.get("USERPROFILE")}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;
   chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
   cwdBackup = Deno.cwd();
   git = {

@@ -244,7 +244,7 @@ export default class GitCommands {
     console.log(url);
 
     if (!Options.test || Options.dryRun) {
-      Utility.run.runAsync(Options.chrome, [url], folder, {
+      Utility.run.runAsync(Options.browser, [url], folder, {
         skipEscape: true,
         skipWait: true,
       });
