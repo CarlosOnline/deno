@@ -30,7 +30,7 @@ export default class DevCommands {
     const api = match.groups.api;
     const api2 = match.groups.api2;
 
-    if (api != api2) {
+    if (api != api2 && !api2.startsWith(api)) {
       logger.warn(`api name mismatch: ${api} != ${api2}`);
     }
 
