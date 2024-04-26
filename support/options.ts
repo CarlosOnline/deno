@@ -38,6 +38,7 @@ export class DefaultOptions extends VisualStudioOptions, EnvironmentOptionsData 
     cmd: "c:\\Program Files\\JetBrains\\IntelliJ IDEA Community Edition 2023.2.2\\plugins\\maven\\lib\\maven3\\bin\\mvn.cmd",
     skipTests: true,
   };
+  oc = "c:/dev/bin/oc.exe"
   sqlcmd =
     '"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\SQLCMD.EXE"';
 
