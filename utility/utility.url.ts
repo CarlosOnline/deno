@@ -88,9 +88,17 @@ export class Url {
     response.errorMessage = Url.getErrorMessage(response.error);
 
     if (response.error) {
-      logger.error(
-        `\nFetch failed ${response.status} ${response.statusText} for ${url}\nError: ${response.errorMessage}`
-      );
+      if (Options.verbose) {
+        logger.error(
+          `\nFetch failed ${response.status} ${response.statusText} for ${url}\nError: ${response.errorMessage}`
+        );
+      } else {
+        logger.error(
+          `\nFetch failed ${response.status} ${
+            response.statusText
+          } for ${url.substring(0, 80)}`
+        );
+      }
     }
 
     return response;

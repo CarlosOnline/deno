@@ -17,7 +17,15 @@ export default class CurlCommands {
       logger.fatal("Missing file path");
     }
 
-    await runner.run(Options.args[1]);
+    let repeatCount = Options.repeat != true ? parseInt(Options.repeat) : 0;
+
+    do {
+      if (Options.parallel) {
+        await runner.runParallel(Options.args[1]);
+      } else {
+        await runner.run(Options.args[1]);
+      }
+    } while (Options.repeat && (Options.repeat == true || repeatCount-- > 0));
   }
 
   @command("curl.list", "List curl commands from specified folder or file", [

@@ -38,6 +38,10 @@ export class Utility {
     return results;
   }
 
+  /**
+   * Sleep for a number of seconds
+   * @param seconds Seconds without milliseconds.  For example 10 for 10 seconds.
+   */
   static async sleep(seconds: number) {
     await sleep(seconds);
   }

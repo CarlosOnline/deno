@@ -253,7 +253,7 @@ EXEC [Perf].[PerfDataCreate] @Request
         bodyLength: body?.length,
       };
     } catch (error) {
-      logger.error(`Fetch failed ${error} for ${url}`);
+      logger.error(`Fetch failed ${error} for ${url.substring(0, 80)}`);
       this.stats.failed++;
       return <FetchResponse>{
         status: 500,

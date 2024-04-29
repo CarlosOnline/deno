@@ -54,7 +54,9 @@ export class CurlCommandRunner {
     total: 0,
     success: 0,
     failed: 0,
+    consecutiveFailed: 0,
   };
+  private consecutiveDelay = 0;
 
   public constructor() {
     this.iteration = 0;
@@ -68,6 +70,28 @@ export class CurlCommandRunner {
       : [fileOrFolderPath];
 
     await Utility.forEachSequential(files, async (filePath) => {
+      logger.info(`Running ${filePath}`);
+      const endpoints = parser.parseCurlFile(filePath);
+      const results = await this.runEndpoints(endpoints);
+      this.writeResults(results, filePath);
+
+      const updateFilePath = `${Utility.path.getFolder(
+        filePath
+      )}\\Update\\${Utility.path.getFileName(filePath)}`;
+      this.generateUpdateCommand(results, updateFilePath);
+
+      this.displayResults(results);
+    });
+  }
+
+  public async runParallel(fileOrFolderPath: string) {
+    const parser = new CurlFileParser();
+
+    const files = Utility.file.isFolder(fileOrFolderPath)
+      ? Utility.file.listFiles(fileOrFolderPath)
+      : [fileOrFolderPath];
+
+    await Utility.forEachParallel(files, async (filePath) => {
       logger.info(`Running ${filePath}`);
       const endpoints = parser.parseCurlFile(filePath);
       const results = await this.runEndpoints(endpoints);
@@ -246,12 +270,24 @@ export class CurlCommandRunner {
 
     this.stats.success += !failed ? 1 : 0;
     this.stats.failed += failed ? 1 : 0;
+    this.stats.consecutiveFailed = failed
+      ? this.stats.consecutiveFailed + 1
+      : 0;
+
+    if (!failed) {
+      this.consecutiveDelay = 0;
+    }
 
     logger.trace(
       `\r${int(this.stats.success)} / ${int(this.stats.total)} / ${int(
         this.stats.failed
       )}                         `
     );
+
+    if (this.stats.consecutiveFailed % 10 == 0) {
+      const additionalDelay = Math.floor(this.stats.consecutiveFailed / 10);
+      this.consecutiveDelay = additionalDelay * 60; // delay additional 60 seconds per 10 consecutive failures
+    }
 
     return results;
   }
@@ -269,7 +305,7 @@ export class CurlCommandRunner {
       logger.info(toDurationString(duration), endpoint.method, endpoint.url);
     }
 
-    return <CurlCommandResult>{
+    const response = <CurlCommandResult>{
       urlInfo: endpoint,
       response: results,
       body: tryParse(results.body as string),
@@ -279,6 +315,13 @@ export class CurlCommandRunner {
       delay: 0,
       envrionment: "",
     };
+
+    const delay = (Options.delay || 0) + this.consecutiveDelay;
+    if (delay > 0) {
+      await Utility.sleep(delay);
+    }
+
+    return response;
   }
 
   private async getToken() {
