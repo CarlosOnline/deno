@@ -4,6 +4,7 @@ import Options from "../support/options.ts";
 import { logger, Utility, Url, UrlInfo } from "../utility/index.ts";
 import { FetchResponse } from "../utility/utility.url.ts";
 import { CurlFileParser } from "./curl-file-parser.ts";
+import { red, green, yellow } from "https://deno.land/std/fmt/colors.ts";
 
 const OneSecondMs = 1000; // 1 second
 
@@ -388,16 +389,25 @@ export class CurlCommandRunner {
   }
 
   private displayResults(results: CurlCommandResult[]) {
+    const status = (status: number) => {
+      if (status >= 200 && status < 300) return green(status.toLocaleString());
+      if (status >= 300 && status < 400) return yellow(status.toLocaleString());
+      if (status >= 400) return red(status.toLocaleString());
+      return status.toLocaleString();
+    };
+
     results.forEach((result) => {
       const bodyStr = result.response.body?.substring(0, 30) || "";
       logger.info(
-        `${result.response.status
-          .toLocaleString()
-          .padEnd(4)} ${result.response.statusText.padEnd(
-          25
-        )} ${result.urlInfo.method.padEnd(5)} ${result.urlInfo.endpoint.padEnd(
-          20
-        )} ${bodyStr} ${result.response.errorMessage}`
+        `${status(result.response.status).padEnd(
+          4
+        )} ${result.response.statusText
+          .substring(0, 24)
+          .padEnd(25)} ${result.urlInfo.method.padEnd(
+          5
+        )} ${result.urlInfo.endpoint.padEnd(20)} ${bodyStr} ${red(
+          result.response.errorMessage?.substring(0, 30) || ""
+        )}`
       );
     });
   }
