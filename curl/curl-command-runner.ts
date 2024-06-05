@@ -326,6 +326,8 @@ export class CurlCommandRunner {
   }
 
   private async getToken() {
+    if (Options.authToken) return Options.authToken;
+
     const service = new Token();
     const tokenData = Options.tokens[Options.tokenApi || "spotcheck-dev"];
     if (!tokenData) {

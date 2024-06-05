@@ -51,6 +51,18 @@ export default class DevCommands {
     return token;
   }
 
+  @command("oc.login", "Login to openshift environment", ["oc.login dev"])
+  async openShiftLogin() {
+    if (!Options.env && Options.args.length < 2) {
+      logger.fatal("Missing download environment");
+    }
+
+    const env: string = Options.url || Options.args[1];
+
+    const oc = new Oc();
+    await oc.login(env);
+  }
+
   @command("test", "test")
   testMethod() {
     logger.info("Test method called");

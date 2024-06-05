@@ -8,7 +8,7 @@ import { logger } from "../utility/index.ts";
 export default class CurlCommands {
   @command("curl.run", "Run curl commands from specified folder or file", [
     "curl.run c:\\Temp\\Api",
-    "curl.run c:\\Temp\\Api\\tests.md",
+    "curl.run c:\\Temp\\Api\\tests.md --authToken *****",
     "curl.run c:\\Temp\\Api\\tests.md --hostUrl=https://my-service.com",
   ])
   async run() {

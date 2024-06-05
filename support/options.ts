@@ -4,7 +4,12 @@ import {
   VisualStudioOptions,
   VisualStudioOptionsBuilder,
 } from "./options.vs.ts";
-import { EnvironmentToken, EnvironmentData, EnvironmentSql, EnvironmentApp } from "./environment.ts";
+import {
+  EnvironmentToken,
+  EnvironmentData,
+  EnvironmentSql,
+  EnvironmentApp,
+} from "./environment.ts";
 
 export interface TokenDataBody {
   grant_type: string;
@@ -18,14 +23,18 @@ export interface TokenData {
   body: TokenDataBody;
 }
 
-export class DefaultOptions extends VisualStudioOptions, EnvironmentOptionsData {
+export class DefaultOptions extends VisualStudioOptions {
   [index: string]: any;
   // Environment file to load.
   env = "";
   scriptFolder = "";
   args: string[] = [];
-  brave = `${Deno.env.get("USERPROFILE")}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;
-  browser = `${Deno.env.get("USERPROFILE")}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;
+  brave = `${Deno.env.get(
+    "USERPROFILE"
+  )}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;
+  browser = `${Deno.env.get(
+    "USERPROFILE"
+  )}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;
   chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
   cwdBackup = Deno.cwd();
   git = {
@@ -38,7 +47,7 @@ export class DefaultOptions extends VisualStudioOptions, EnvironmentOptionsData 
     cmd: "c:\\Program Files\\JetBrains\\IntelliJ IDEA Community Edition 2023.2.2\\plugins\\maven\\lib\\maven3\\bin\\mvn.cmd",
     skipTests: true,
   };
-  oc = "c:/dev/bin/oc.exe"
+  oc = "c:/dev/bin/oc.exe";
   sqlcmd =
     '"C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\SQLCMD.EXE"';
 
@@ -59,7 +68,11 @@ export class DefaultOptions extends VisualStudioOptions, EnvironmentOptionsData 
   projects: { [key: string]: string } = {};
 }
 
-type OptionsType = DefaultOptions | Record<string, any>;
+type OptionsType =
+  | DefaultOptions
+  | VisualStudioOptions
+  | EnvironmentData
+  | Record<string, any>;
 
 class OptionsParser {
   public initializeOptions() {
@@ -137,7 +150,8 @@ class OptionsParser {
   }
 }
 
-const Options: OptionsType = <any>new DefaultOptions();
+const Options: OptionsType = new DefaultOptions();
+
 const parser = new OptionsParser();
 parser.initializeOptions();
 

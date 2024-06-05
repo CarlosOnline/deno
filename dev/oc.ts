@@ -1,4 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
+
 import Options from "../support/options.ts";
 import {
   DefaultRunOptions,
@@ -13,13 +14,36 @@ export class Oc {
     return results;
   }
 
+  async login(env: string) {
+    const userName = Deno.env.get("USERNAME") as string;
+    const project = Options.project || Options.openshift[env].project;
+    const server = Options.server || Options.openshift[env].server;
+    const password = await this.getPassword();
+
+    if (!password || !userName || !project || !server) {
+      logger.error("Missing password, username, project or server.");
+      return;
+    }
+
+    // oc login -u=carlos.gomes -p=**** -s=%_Server% -n %_Project%
+    console.log(`oc login -u=${userName} -p=**** -n=${project} -s=${server}`);
+
+    const results = await this.runAsync([
+      "login",
+      `-u=${userName}`,
+      `-p=${password}`,
+      `-n=${project}`,
+      `-s=${server}`,
+    ]);
+    return results;
+  }
+
   private async runAsync(
     args: string[],
     folder: string = Deno.cwd(),
     runOptions: RunOptions = {
       ...DefaultRunOptions,
       ...{ verbose: Options.verbose },
-      ...{ capture: true },
     }
   ) {
     const results = await Utility.run.runAsync(Options.oc, args, folder, {
@@ -30,5 +54,24 @@ export class Oc {
       logger.error(`oc ${args.join(" ")} failed for ${folder}`);
     }
     return results;
+  }
+
+  private async getPassword() {
+    const kv = await Deno.openKv();
+    let password = Options.password;
+
+    if (password) {
+      await kv.set(["password"], password);
+      console.log("Password saved.");
+    } else {
+      const passwordData: any = await kv.get(["password"]);
+      password = passwordData?.value;
+    }
+
+    if (!password) {
+      password = prompt("Enter password: ");
+      await kv.set(["password"], password);
+    }
+    return password;
   }
 }

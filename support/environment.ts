@@ -39,7 +39,15 @@ export type EnvironmentApp = {
   };
 };
 
+export type EnvironmentOpenShift = {
+  [key: string]: string;
+  server: string;
+  project: string;
+};
+
 export interface EnvironmentData {
+  [index: string]: any;
+
   projects: {
     [key: string]: string;
   };
@@ -52,4 +60,5 @@ export interface EnvironmentData {
   perf: {
     [key: string]: EnvironmentPerf;
   };
+  openshift: EnvironmentOpenShift;
 }
