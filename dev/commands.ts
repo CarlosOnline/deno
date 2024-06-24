@@ -8,6 +8,11 @@ import { Oc } from "./index.ts";
 import Token from "./token.ts";
 
 export default class DevCommands {
+  @command("options", "Display options")
+  dumpOptions() {
+    console.log(Options);
+  }
+
   @command("deploy", "Deploy to profile", [
     "deploy https://artifactory.company.com/artifactory/oc-project/XXXX-api/XXX-api-2.1.7-beta.40.tgz",
   ])

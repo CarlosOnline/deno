@@ -25,7 +25,7 @@ export interface TokenData {
 export class DefaultOptions extends VisualStudioOptions {
   [index: string]: any;
   // Environment file to load.
-  env: string | string[] = "";
+  options: string | string[] = "";
   scriptFolder = "";
   args: string[] = [];
   brave = `${Deno.env.get(
@@ -67,8 +67,8 @@ type OptionsType =
   | EnvironmentData
   | Record<string, any>;
 
-export function loadEnvironmentFile<T>(env: string) {
-  const filePath = `${Options.scriptFolder}/env/${env}`;
+export function loadEnvironmentFile<T>(fileName: string) {
+  const filePath = `${Options.scriptFolder}/env/${fileName}`;
   const data = Deno.readFileSync(filePath);
   const decoder = new TextDecoder("utf-8");
   const contents = decoder.decode(data);
@@ -80,7 +80,7 @@ class OptionsParser {
     this.initializeScriptFolder();
     this.initializeVisualStudio();
     this.parseArgs(Deno.args);
-    this.loadEnvironmentData(Options.env);
+    this.loadEnvironmentData(Options.options);
   }
 
   private initializeScriptFolder() {
@@ -94,21 +94,21 @@ class OptionsParser {
     Object.assign(Options, options);
   }
 
-  private loadEnvironmentData(env: string | string[]) {
-    if (!env) {
+  private loadEnvironmentData(fileNames: string | string[]) {
+    const loadEnvironment = (fileName: string) => {
+      const settings: EnvironmentData = loadEnvironmentFile(fileName);
+      Object.assign(Options, settings);
+    };
+
+    if (!fileNames) {
       return;
     }
 
-    if (Array.isArray(env)) {
-      env.forEach((e) => this.loadEnvironment(e));
+    if (Array.isArray(fileNames)) {
+      fileNames.forEach((e) => loadEnvironment(e));
     } else {
-      this.loadEnvironment(env);
+      loadEnvironment(fileNames);
     }
-  }
-
-  private loadEnvironment(env: string) {
-    const settings: EnvironmentData = loadEnvironmentFile(env);
-    Object.assign(Options, settings);
   }
 
   private parseArgs(args: string[]) {
