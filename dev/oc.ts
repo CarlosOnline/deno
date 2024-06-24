@@ -44,6 +44,7 @@ export class Oc {
     runOptions: RunOptions = {
       ...DefaultRunOptions,
       ...{ verbose: Options.verbose },
+      ...{ capture: true },
     }
   ) {
     const results = await Utility.run.runAsync(Options.oc, args, folder, {

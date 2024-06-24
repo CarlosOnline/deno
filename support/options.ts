@@ -5,7 +5,6 @@ import {
   VisualStudioOptionsBuilder,
 } from "./options.vs.ts";
 import {
-  EnvironmentToken,
   EnvironmentData,
   EnvironmentSql,
   EnvironmentApp,
@@ -26,7 +25,7 @@ export interface TokenData {
 export class DefaultOptions extends VisualStudioOptions {
   [index: string]: any;
   // Environment file to load.
-  env = "";
+  env: string | string[] = "";
   scriptFolder = "";
   args: string[] = [];
   brave = `${Deno.env.get(
@@ -58,13 +57,7 @@ export class DefaultOptions extends VisualStudioOptions {
     database: "Default Database",
   };
 
-  token?: EnvironmentToken = {
-    token: "",
-    target: "",
-    url: "",
-    body: [],
-  };
-
+  serviceTokenFile: string = "";
   projects: { [key: string]: string } = {};
 }
 
@@ -73,6 +66,14 @@ type OptionsType =
   | VisualStudioOptions
   | EnvironmentData
   | Record<string, any>;
+
+export function loadEnvironmentFile<T>(env: string) {
+  const filePath = `${Options.scriptFolder}/env/${env}`;
+  const data = Deno.readFileSync(filePath);
+  const decoder = new TextDecoder("utf-8");
+  const contents = decoder.decode(data);
+  return JSON.parse(contents) as T;
+}
 
 class OptionsParser {
   public initializeOptions() {
@@ -93,16 +94,20 @@ class OptionsParser {
     Object.assign(Options, options);
   }
 
-  private loadEnvironmentData(env: string) {
+  private loadEnvironmentData(env: string | string[]) {
     if (!env) {
       return;
     }
 
-    const filePath = `${Options.scriptFolder}/env/${env}`;
-    const data = Deno.readFileSync(filePath);
-    const decoder = new TextDecoder("utf-8");
-    const contents = decoder.decode(data);
-    const settings: EnvironmentData = JSON.parse(contents);
+    if (Array.isArray(env)) {
+      env.forEach((e) => this.loadEnvironment(e));
+    } else {
+      this.loadEnvironment(env);
+    }
+  }
+
+  private loadEnvironment(env: string) {
+    const settings: EnvironmentData = loadEnvironmentFile(env);
     Object.assign(Options, settings);
   }
 
@@ -129,7 +134,15 @@ class OptionsParser {
           } else if (OptionsParser.isNumeric(nextArg)) {
             Options[key] = parseInt(nextArg);
           } else {
-            Options[key] = nextArg;
+            if (Options[key]) {
+              if (Array.isArray(Options[key])) {
+                Options[key].push(nextArg);
+              } else {
+                Options[key] = [Options[key], nextArg];
+              }
+            } else {
+              Options[key] = nextArg;
+            }
           }
           idx++;
         }

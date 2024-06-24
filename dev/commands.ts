@@ -1,6 +1,7 @@
+// deno-lint-ignore-file no-explicit-any
 import { brightYellow, red, bold } from "https://deno.land/std/fmt/colors.ts";
 
-import { command } from "../support/index.ts";
+import { command, loadEnvironmentFile } from "../support/index.ts";
 import Options from "../support/options.ts";
 import { logger, Url, UrlInfo, Utility } from "../utility/index.ts";
 import { Oc } from "./index.ts";
@@ -24,29 +25,23 @@ export default class DevCommands {
   @command("token", "Get authorization token", [
     "token",
     "token api-name environment",
-    "token spotcheck-UAT",
-    "token reference UAT",
+    "token spotcheck UAT",
+    "token reference dev",
   ])
   async getToken() {
-    const key = DevCommands.getTokenKey();
+    const service =
+      Options.args.length >= 2 ? Options.args[1].toLocaleLowerCase() : "";
+    const env =
+      Options.args.length >= 3 ? Options.args[2].toLocaleLowerCase() : "";
 
-    const tokenData = DevCommands.getTokenData(key);
-    if (tokenData == null) {
-      logger.fatal(`Missing token data for ${Options.key}`);
+    const token = await Token.getToken(service, env);
+    if (!token) {
+      logger.fatal("Failed to get token");
       return;
     }
-
-    const service = new Token();
-    const token = await service.token(tokenData);
-
     logger.info(token);
 
     await Utility.copyTextToClipboard(token);
-
-    if (tokenData.outputFilePath) {
-      Utility.file.writeTextFile(tokenData.outputFilePath, token);
-      logger.info(`Generated ${tokenData.outputFilePath}`);
-    }
 
     return token;
   }
@@ -66,30 +61,6 @@ export default class DevCommands {
   @command("test", "test")
   testMethod() {
     logger.info("Test method called");
-  }
-
-  private static getTokenData(key = "") {
-    if (!key) {
-      return Options.token;
-    }
-
-    return Options.tokens[key] || null;
-  }
-
-  private static getTokenKey() {
-    if (Options.key) {
-      return Options.key;
-    }
-
-    if (Options.args.length == 2) {
-      return Options.args[1].toLocaleLowerCase();
-    }
-
-    if (Options.args.length == 3) {
-      return `${Options.args[1]}-${Options.args[2]}`.toLocaleLowerCase();
-    }
-
-    return "";
   }
 
   /**

@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { TokenData } from "../support/options.ts";
+import { loadEnvironmentFile, TokenData } from "../support/options.ts";
 import { logger, Utility } from "../utility/index.ts";
 import Options from "../support/options.ts";
 
@@ -16,6 +16,23 @@ type TokenCache = {
   token: string;
 };
 
+export type ServiceToken = {
+  [key: string]: any;
+  url: string;
+  body: [string, string][];
+  outputFilePath?: string;
+};
+
+export type ServiceEnvMap = {
+  [key: string]: ServiceToken;
+  dev: ServiceToken;
+  qc: ServiceToken;
+  uat: ServiceToken;
+  prod: ServiceToken;
+};
+
+export type ServiceTokenMap = { [key: string]: ServiceEnvMap };
+
 export default class Token {
   private static cache: TokenCache = {
     timestamp: 0,
@@ -23,12 +40,27 @@ export default class Token {
     token: "",
   };
 
-  async token(tokenData: TokenData, force = false) {
+  static async getToken(service: string = "", env: string = "", force = false) {
+    const tokenService = new Token();
+    const tokenData = tokenService.getTokenData(service, env);
+    if (tokenData == null) {
+      logger.fatal(`Missing token data for ${service}`);
+      return;
+    }
+
+    return await tokenService.token(tokenData, force);
+  }
+
+  private async token(tokenData: ServiceToken, force = false) {
     if (!force) {
       const cachedToken = this.getCachedToken();
       if (cachedToken) {
         return cachedToken;
       }
+    }
+
+    if (Options.verbose) {
+      console.log(tokenData);
     }
 
     const formBody: string[] = [];
@@ -39,11 +71,6 @@ export default class Token {
     });
 
     const formBodyJson = formBody.join("&");
-
-    if (Options.verbose) {
-      logger.info(`token ${tokenData.url}`, formBodyJson);
-    }
-    logger.info(`token ${tokenData.url}`, formBodyJson);
 
     const resp = await fetch(tokenData.url, {
       method: "POST",
@@ -57,7 +84,7 @@ export default class Token {
       logger.error(
         `Fetch token failed ${resp.status} ${resp.statusText} for ${tokenData.url}`
       );
-      return null;
+      return "";
     }
 
     const body = await resp.json();
@@ -66,6 +93,38 @@ export default class Token {
     this.saveToken(token);
 
     return token;
+  }
+
+  private getTokenData(service: string, env: string = "") {
+    const serviceTokenMap = this.getServiceTokenMap();
+    service = service || Object.keys(serviceTokenMap)[0];
+
+    const serviceEnvMap = serviceTokenMap[service];
+    if (!serviceEnvMap || Object.keys(serviceEnvMap).length == 0) {
+      logger.fatal(`Missing service data for ${service} ${env}`);
+      return null;
+    }
+
+    const serviceEnvs = Object.keys(serviceEnvMap);
+    env = env || serviceEnvs[0];
+
+    if (Options.verbose) {
+      console.log(`get token data for ${service} ${env}`, serviceEnvMap[env]);
+    }
+
+    return serviceEnvMap[env];
+  }
+
+  private getServiceTokenMap() {
+    const serviceTokenMap = loadEnvironmentFile<ServiceTokenMap>(
+      Options.serviceTokenFile
+    );
+
+    if (Object.keys(serviceTokenMap).length == 0) {
+      logger.fatal(`Missing service tokens for ${Options.serviceTokenFile}`);
+    }
+
+    return serviceTokenMap;
   }
 
   private saveToken(token: string) {

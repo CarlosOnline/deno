@@ -306,9 +306,7 @@ EXEC [Perf].[PerfDataCreate] @Request
   }
 
   private async getToken() {
-    const service = new Token();
-    const tokenData = Options.tokens[Options.perf.token];
-    const token = await service.token(tokenData);
+    const token = await Token.getToken(Options.perf.token);
     if (!token) {
       logger.error("Failed to get token");
       throw new Error("Failed to get token");

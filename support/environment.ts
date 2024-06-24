@@ -18,14 +18,6 @@ export type EnvironmentPerf = {
   }[];
 };
 
-export type EnvironmentToken = {
-  [key: string]: any;
-  target: string;
-  url: string;
-  body: [string, string][];
-  outputFilePath?: string;
-};
-
 export type EnvironmentSql = {
   [key: string]: string;
   server: string;
@@ -52,10 +44,6 @@ export interface EnvironmentData {
     [key: string]: string;
   };
   sql: EnvironmentSql;
-  token: EnvironmentToken;
-  tokens: {
-    [key: string]: EnvironmentToken;
-  };
   apps: EnvironmentApp;
   perf: {
     [key: string]: EnvironmentPerf;

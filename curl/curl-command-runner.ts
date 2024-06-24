@@ -328,14 +328,7 @@ export class CurlCommandRunner {
   private async getToken() {
     if (Options.authToken) return Options.authToken;
 
-    const service = new Token();
-    const tokenData = Options.tokens[Options.tokenApi || "spotcheck-dev"];
-    if (!tokenData) {
-      logger.fatal(`No token data found for ${Options.tokenApi}`);
-      throw new Error(`No token data found for ${Options.tokenApi}`);
-    }
-
-    const token = await service.token(tokenData);
+    const token = await Token.getToken(Options.service, Options.env, false);
     if (!token) {
       logger.fatal(`No token for ${Options.tokenApi}`);
       throw new Error(`No token for ${Options.tokenApi}`);
