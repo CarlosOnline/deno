@@ -61,12 +61,14 @@ export class Oc {
     const kv = await Deno.openKv();
     let password = Options.password;
 
-    if (password) {
-      await kv.set(["password"], password);
-      console.log("Password saved.");
-    } else {
-      const passwordData: any = await kv.get(["password"]);
-      password = passwordData?.value;
+    if (!Options.promptPassword) {
+      if (password) {
+        await kv.set(["password"], password);
+        console.log("Password saved.");
+      } else {
+        const passwordData: any = await kv.get(["password"]);
+        password = passwordData?.value;
+      }
     }
 
     if (!password) {

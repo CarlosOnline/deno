@@ -51,7 +51,9 @@ export default class DevCommands {
     return token;
   }
 
-  @command("oc.login", "Login to openshift environment", ["oc.login dev"])
+  @command("oc.login", "Login to openshift environment", [
+    "oc.login dev --promptPassword",
+  ])
   async openShiftLogin() {
     if (!Options.env && Options.args.length < 2) {
       logger.fatal("Missing download environment");
