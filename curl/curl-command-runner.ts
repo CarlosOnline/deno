@@ -415,6 +415,9 @@ export class CurlCommandRunner {
       const bodyStr = result.response.body?.substring(0, 30) || "";
       const responseData = this.responseData(result.response.body as string);
 
+      const responseDataLength =
+        responseData?.length || Object.keys(responseData || {}).length;
+
       logger.info(
         `${status(result.response.status).padEnd(4)} 
         
@@ -423,7 +426,7 @@ export class CurlCommandRunner {
           .padEnd(25)} ${result.urlInfo.method.padEnd(5)}
 
           ${totalCount.toLocaleString().padEnd(6)}
-          ${responseData?.length?.toLocaleString().padEnd(5)}
+          ${responseDataLength.toLocaleString().padEnd(5)}
 
           ${result.urlInfo.hostUrl}/${result.urlInfo.endpoint.padEnd(20)}
         
