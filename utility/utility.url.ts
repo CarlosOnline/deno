@@ -7,6 +7,7 @@ export type FetchResponse = {
   statusText: string;
   error?: string;
   errorMessage?: string;
+  headers?: Headers;
   body?: string | null;
   bodyLength?: number | undefined;
 };
@@ -56,6 +57,7 @@ export class Url {
       const resp = await fetch(url, params);
 
       response.ok = resp.ok;
+      response.headers = resp.headers;
       response.status = resp.status || 500;
       response.statusText = resp.statusText || "Unknown error";
 

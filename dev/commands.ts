@@ -22,7 +22,8 @@ export default class DevCommands {
     }
 
     const url: string = Options.url || Options.args[1];
-    const profile: string = Options.profile || "dev";
+    const profileArg = Options.args.length > 2 ? Options.args[2] : "";
+    const profile: string = Options.profile || profileArg || "dev";
 
     await DevCommands.deployToProfile(url, profile);
   }
@@ -128,6 +129,9 @@ export default class DevCommands {
 
     logger.warn(`Deploying ${api}`);
 
+    const deleteCommandLine = `helm delete ${api}`;
+    logger.info(deleteCommandLine);
+
     const commandLine = `helm upgrade -i --set profile=${profile} ${api} ${url}`;
     logger.info(commandLine);
 
@@ -136,10 +140,31 @@ export default class DevCommands {
         bold(project)
       )} for ${profile}?`
     );
-    if (proceed) {
+
+    if (!proceed) return;
+
+    await Utility.run.runAsync(
+      Utility.path.basename(Options.helm),
+      `delete ${api}`.split(" "),
+      Utility.path.dirname(Options.helm),
+      {
+        skipEscape: true,
+      }
+    );
+
+    await Utility.run.runAsync(
+      Utility.path.basename(Options.helm),
+      `upgrade -i --set profile=${profile} ${api} ${url}`.split(" "),
+      Utility.path.dirname(Options.helm),
+      {
+        skipEscape: true,
+      }
+    );
+
+    if (Options.verbose) {
       await Utility.run.runAsync(
         Utility.path.basename(Options.helm),
-        `upgrade -i --set profile=dev ${api} ${url}`.split(" "),
+        `get all ${api}`.split(" "),
         Utility.path.dirname(Options.helm),
         {
           skipEscape: true,

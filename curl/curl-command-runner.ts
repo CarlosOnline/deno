@@ -82,6 +82,11 @@ export class CurlCommandRunner {
       this.generateUpdateCommand(results, updateFilePath);
 
       this.displayResults(results);
+
+      const delay = (Options.delay || 0) + this.consecutiveDelay;
+      if (delay > 0) {
+        await Utility.sleep(delay);
+      }
     });
   }
 
@@ -317,11 +322,6 @@ export class CurlCommandRunner {
       envrionment: "",
     };
 
-    const delay = (Options.delay || 0) + this.consecutiveDelay;
-    if (delay > 0) {
-      await Utility.sleep(delay);
-    }
-
     return response;
   }
 
@@ -383,6 +383,24 @@ export class CurlCommandRunner {
     }
   }
 
+  private responseData(body: string) {
+    if (!body) return [];
+
+    try {
+      return JSON.parse(body);
+    } catch {
+      return [];
+    }
+  }
+
+  private getTotalCount(headers?: Headers) {
+    const count = headers?.get("x-pagination");
+    if (!count) return 0;
+
+    const json = JSON.parse(count);
+    return json.totalCount;
+  }
+
   private displayResults(results: CurlCommandResult[]) {
     const status = (status: number) => {
       if (status >= 200 && status < 300) return green(status.toLocaleString());
@@ -392,17 +410,29 @@ export class CurlCommandRunner {
     };
 
     results.forEach((result) => {
+      const totalCount = this.getTotalCount(result.response.headers);
+
       const bodyStr = result.response.body?.substring(0, 30) || "";
+      const responseData = this.responseData(result.response.body as string);
+
       logger.info(
-        `${status(result.response.status).padEnd(
-          4
-        )} ${result.response.statusText
+        `${status(result.response.status).padEnd(4)} 
+        
+        ${result.response.statusText
           .substring(0, 24)
-          .padEnd(25)} ${result.urlInfo.method.padEnd(
-          5
-        )} ${result.urlInfo.endpoint.padEnd(20)} ${bodyStr} ${red(
-          result.response.errorMessage?.substring(0, 30) || ""
-        )}`
+          .padEnd(25)} ${result.urlInfo.method.padEnd(5)}
+
+          ${totalCount.toLocaleString().padEnd(6)}
+          ${responseData?.length?.toLocaleString().padEnd(5)}
+
+          ${result.urlInfo.hostUrl}/${result.urlInfo.endpoint.padEnd(20)}
+        
+        ${bodyStr} 
+        
+        ${red(result.response.errorMessage?.substring(0, 30) || "")}`
+          .replaceAll("\r\n", "")
+          .replaceAll("\r", "")
+          .replaceAll("\n", "")
       );
     });
   }

@@ -112,6 +112,8 @@ export class Git {
     const config = this.config(folder);
     if (!config) return "";
 
+    logger.highlight(`Repository ${config.repo.padEnd(40)}`);
+
     const results = await this.runAsync("branch -l".split(" "), folder);
 
     return normalizeBranch(results);

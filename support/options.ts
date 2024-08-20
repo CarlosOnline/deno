@@ -37,7 +37,7 @@ export class DefaultOptions extends VisualStudioOptions {
   chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
   cwdBackup = Deno.cwd();
   git = {
-    cmd: "C:/Program Files/Git/cmd/git.exe",
+    cmd: "C:/Users/carlos.gomes/AppData/Local/Programs/Git/cmd/git.exe",
     mainBranches: ["main", "master", "develop"],
     develop: "develop",
   };

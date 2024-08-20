@@ -1,23 +1,13 @@
 // deno-lint-ignore-file no-explicit-any
-import { loadEnvironmentFile, TokenData } from "../support/options.ts";
-import { logger, Utility } from "../utility/index.ts";
+import { loadEnvironmentFile } from "../support/options.ts";
+import { logger } from "../utility/index.ts";
 import Options from "../support/options.ts";
-
-const OneSecondMs = 1000;
-const OneMinuteMs = 60 * OneSecondMs;
-const OneHourMs = 60 * OneMinuteMs;
-const MaxDurationMs = OneHourMs;
-
-const TokenFolder = "c:\\temp\\token";
-
-type TokenCache = {
-  timestamp: number;
-  date: Date;
-  token: string;
-};
+import { TokenCache } from "./index.ts";
 
 export type ServiceToken = {
   [key: string]: any;
+  service: string;
+  env: string;
   url: string;
   body: [string, string][];
   outputFilePath?: string;
@@ -34,12 +24,6 @@ export type ServiceEnvMap = {
 export type ServiceTokenMap = { [key: string]: ServiceEnvMap };
 
 export default class Token {
-  private static cache: TokenCache = {
-    timestamp: 0,
-    date: new Date(),
-    token: "",
-  };
-
   static async getToken(service: string = "", env: string = "", force = false) {
     const tokenService = new Token();
     const tokenData = tokenService.getTokenData(service, env);
@@ -53,7 +37,7 @@ export default class Token {
 
   private async token(tokenData: ServiceToken, force = false) {
     if (!force) {
-      const cachedToken = this.getCachedToken();
+      const cachedToken = this.getCachedToken(tokenData.service, tokenData.env);
       if (cachedToken) {
         return cachedToken;
       }
@@ -90,7 +74,8 @@ export default class Token {
     const body = await resp.json();
     const token = body.access_token as string;
 
-    this.saveToken(token);
+    const tokenCache = new TokenCache();
+    tokenCache.saveToken(tokenData.service, tokenData.env, token);
 
     return token;
   }
@@ -101,7 +86,11 @@ export default class Token {
 
     const serviceEnvMap = serviceTokenMap[service];
     if (!serviceEnvMap || Object.keys(serviceEnvMap).length == 0) {
-      logger.fatal(`Missing service data for ${service} ${env}`);
+      logger.fatal(
+        `Missing service data for ${service} ${env} available services: ${Object.keys(
+          serviceTokenMap
+        )}`
+      );
       return null;
     }
 
@@ -112,7 +101,19 @@ export default class Token {
       console.log(`get token data for ${service} ${env}`, serviceEnvMap[env]);
     }
 
-    return serviceEnvMap[env];
+    const result = serviceEnvMap[env];
+    if (!result) {
+      logger.fatal(
+        `Missing service data for ${service} ${env} available env: ${Object.keys(
+          serviceEnvMap
+        )}`
+      );
+      return null;
+    }
+
+    result["service"] = service;
+    result["env"] = env;
+    return result;
   }
 
   private getServiceTokenMap() {
@@ -127,50 +128,8 @@ export default class Token {
     return serviceTokenMap;
   }
 
-  private saveToken(token: string) {
-    const now = new Date();
-    Token.cache.timestamp = now.getTime();
-    Token.cache.date = now;
-    Token.cache.token = token;
-
-    Utility.path.ensure_directory(TokenFolder);
-
-    const tokenFilePath = `${TokenFolder}\\token.json`;
-    Utility.file.writeTextFile(tokenFilePath, JSON.stringify(Token.cache));
-  }
-
-  private loadToken() {
-    const tokenFilePath = `${TokenFolder}\\token.json`;
-    if (!Utility.file.exists(tokenFilePath)) return null;
-
-    try {
-      const tokenData = Utility.file.readTextFile(tokenFilePath);
-      return JSON.parse(tokenData) as TokenCache;
-    } catch {
-      return null;
-    }
-  }
-
-  private isValidToken(tokenCache: TokenCache) {
-    if (!tokenCache) return false;
-
-    const now = new Date();
-    const diff = now.getTime() - tokenCache.timestamp;
-    return diff < MaxDurationMs && tokenCache.token;
-  }
-
-  private getCachedToken() {
-    if (!Token.cache.token) {
-      const tokenData = this.loadToken();
-      if (tokenData) {
-        Token.cache = tokenData;
-      }
-    }
-
-    if (this.isValidToken(Token.cache)) {
-      return Token.cache.token;
-    }
-
-    return null;
+  private getCachedToken(service: string, env: string) {
+    const tokenCache = new TokenCache();
+    return tokenCache.getCachedToken(service, env);
   }
 }
