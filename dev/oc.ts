@@ -14,6 +14,15 @@ export class Oc {
     return results;
   }
 
+  async logProject() {
+    const results = await this.runAsync(["project"], Deno.cwd(), {
+      ...DefaultRunOptions,
+      ...{ verbose: Options.verbose },
+      ...{ capture: false },
+    });
+    return results;
+  }
+
   async login(env: string) {
     const userName = Deno.env.get("USERNAME") as string;
     const project = Options.project || Options.openshift[env].project;

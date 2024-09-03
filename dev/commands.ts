@@ -64,6 +64,7 @@ export default class DevCommands {
 
     const oc = new Oc();
     await oc.login(env);
+    await oc.logProject();
   }
 
   @command("test", "test")
