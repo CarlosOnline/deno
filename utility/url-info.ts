@@ -16,8 +16,8 @@ export class UrlInfo {
   method: string = "";
   hostUrl: string = "";
   endpoint: string = "";
-  params: Dict = {};
-  headers: Dict = {};
+  params: { [key: string]: string } = {};
+  headers: { [key: string]: string } = {};
   payload?: string;
 
   get url() {

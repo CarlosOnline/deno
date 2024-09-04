@@ -22,7 +22,7 @@ const flavors = ["Community", "Professional", "Enterprise"];
 const startYear = new Date().getFullYear();
 const years = Array.from(
   { length: startYear - 2010 },
-  (item, index) => startYear - index
+  (_item, index) => startYear - index
 );
 
 export class VisualStudioOptions {

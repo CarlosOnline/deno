@@ -145,11 +145,11 @@ export class Url {
     return parts[parts.length - 1];
   }
 
-  static getParams(url: string): Dict {
+  static getParams(url: string): { [key: string]: string } {
     const parts = url.split("?");
     if (parts.length == 1) return {};
 
-    const params: Dict = {};
+    const params: { [key: string]: string } = {};
     const paramsParts = parts[1].split("&");
     paramsParts.forEach((param) => {
       const keyValue = param.split("=");
@@ -160,7 +160,7 @@ export class Url {
   }
 
   static getHeaders(value: string) {
-    const headers: Dict = {};
+    const headers: { [key: string]: string } = {};
     if (!value) return headers;
 
     (value?.split("-H") || [])
