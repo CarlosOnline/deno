@@ -59,6 +59,13 @@ export class DefaultOptions extends VisualStudioOptions {
 
   serviceTokenFile: string = "";
   projects: { [key: string]: string } = {};
+
+  getArg(index: number, defaultValue: any = undefined) {
+    if (this.args.length > index) {
+      return this.args[index];
+    }
+    return defaultValue;
+  }
 }
 
 type OptionsType =

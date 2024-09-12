@@ -11,13 +11,13 @@ export function command(
 ): any {
   return function (
     target: any,
-    // deno-lint-ignore no-unused-vars
-    propertyKey: any,
+    _propertyKey: any,
     descriptor: PropertyDescriptor
   ) {
     CommandTargets.push(target);
 
-    Reflect.defineMetadata("names", name.split(","), target);
+    const names = name.split(",").map((item) => item.trim());
+    Reflect.defineMetadata("names", names, target);
     Reflect.defineMetadata("examples", examples, target);
     Reflect.defineMetadata("description", description, target);
 

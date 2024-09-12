@@ -412,7 +412,9 @@ export class CurlCommandRunner {
     results.forEach((result) => {
       const totalCount = this.getTotalCount(result.response.headers);
 
-      const bodyStr = result.response.body?.substring(0, 30) || "";
+      const body = result.response.body || "";
+      const bodyStr =
+        Options.verbose || Options.show ? body : body.substring(0, 100);
       const responseData = this.responseData(result.response.body as string);
 
       const responseDataLength =
