@@ -49,10 +49,19 @@ export default class Token {
 
     const formBody: string[] = [];
     (<string[][]>(tokenData.body as any)).forEach((pair) => {
-      const encodedKey = encodeURIComponent(pair[0]);
-      const encodedValue = encodeURIComponent(pair[1]);
+      const key = pair[0];
+      const value = pair[1];
+      if (!key || !value) {
+        return;
+      }
+      const encodedKey = encodeURIComponent(key);
+      const encodedValue = encodeURIComponent(value);
       formBody.push(encodedKey + "=" + encodedValue);
     });
+
+    if (Options.verbose) {
+      console.log(formBody);
+    }
 
     const formBodyJson = formBody.join("&");
 

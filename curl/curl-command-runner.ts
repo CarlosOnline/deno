@@ -236,11 +236,26 @@ export class CurlCommandRunner {
         new Date().toLocaleString()
     );
 
+    await this.cacheTokensForEndpoints(endpoints);
+
     const results = await this.runEndpointsWithTimer(endpoints, token);
 
     logger.trace("\n");
 
     return results;
+  }
+
+  private async cacheTokensForEndpoints(endpoints: UrlInfo[]) {
+    if (Options.parallel) {
+      return await Promise.all(
+        endpoints.map((endpoint: UrlInfo) => this.cacheToken(endpoint))
+      );
+    } else {
+      return await Utility.forEachSequential(
+        endpoints,
+        async (endpoint: UrlInfo) => await this.cacheToken(endpoint)
+      );
+    }
   }
 
   private async runEndpointsWithTimer(endpoints: UrlInfo[], token: string) {
@@ -257,6 +272,8 @@ export class CurlCommandRunner {
   }
 
   private async fetch(endpoint: UrlInfo, token: string) {
+    token = await this.getTokenFromEndpoint(endpoint, token);
+
     this.stats.total++;
 
     logger.trace(
@@ -325,13 +342,40 @@ export class CurlCommandRunner {
     return response;
   }
 
+  private async cacheToken(endpoint: UrlInfo) {
+    return await this.getTokenFromEndpoint(endpoint, "");
+  }
+
+  private async getTokenFromEndpoint(endpoint: UrlInfo, token: string) {
+    // Extract api name from the endpoint
+    // http://enrich-rca-ce-dev.apps.ocpdev
+
+    const hostName = endpoint.hostUrl.split(":")[1].trim().replace("//", "");
+    if (hostName.indexOf("localhost") >= 0) return token;
+
+    const service = hostName.split("-")[0];
+
+    const hostNamePrefix = hostName.split(".")[0];
+    const envParts = hostNamePrefix.split("-");
+    const env = envParts[envParts.length - 1];
+
+    // Not uses cached token
+    return await this.getTokenWorker(service, Options.env || env);
+  }
+
   private async getToken() {
+    return await this.getTokenWorker(Options.service, Options.env);
+  }
+
+  private async getTokenWorker(service: string, env: string) {
     if (Options.authToken) return Options.authToken;
 
-    const token = await Token.getToken(Options.service, Options.env, false);
+    const token = await Token.getToken(service, env, false);
     if (!token) {
-      logger.fatal(`No token for ${Options.tokenApi}`);
-      throw new Error(`No token for ${Options.tokenApi}`);
+      logger.fatal(`No token for ${service} - ${env} from ${Options.tokenApi}`);
+      throw new Error(
+        `No token for ${service} - ${env} from ${Options.tokenApi}`
+      );
     }
 
     return token;
