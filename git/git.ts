@@ -170,13 +170,16 @@ export class Git {
     await this.runAsync("fetch".split(" "), folder);
   }
 
+  /**
+   * Gets all info about repository.
+   * NOTE: Do not call any methods that need an info object from within this method.
+   * NOTE: Otherwise will lead to infinite recusion.
+   */
   async info(folder: string = Deno.cwd()): Promise<Config | null> {
     const config = this.config(folder);
     if (!config) return null;
 
-    if (Options.prune) {
-      await this.prune(folder);
-    } else if (Options.update) {
+    if (Options.update) {
       await this.updateRemote(folder);
     }
 
@@ -197,6 +200,10 @@ export class Git {
 
     if (remoteMainBranches.indexOf(Options.git.develop) != -1) {
       config.develop = Options.git.develop;
+    }
+
+    if (Options.prune) {
+      await this.prune_worker(config, folder);
     }
 
     return config;
@@ -311,6 +318,10 @@ export class Git {
     const info = await this.info(folder);
     if (!info) return;
 
+    return this.prune_worker(info, folder);
+  }
+
+  async prune_worker(info: Config, folder: string = Deno.cwd()): Promise<void> {
     await this.runAsync("remote prune origin".split(" "), folder);
 
     const mergedResponse = await this.runAsync(
@@ -339,10 +350,7 @@ export class Git {
       }
     );
     if (!deleteBranches.length) return;
-
-    Utility.forEachParallel(deleteBranches, async (branch) => {
-      await this.runAsync(`branch -D ${branch}`.split(" "), folder);
-    });
+    console.log(info.branch, deleteBranches);
 
     await this.deleteBranches(deleteBranches, folder);
   }
