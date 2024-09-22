@@ -111,7 +111,7 @@ export class Url {
         headers["Content-Type"] = "application/json";
       }
 
-      if (token) {
+      if (token && token != "none") {
         headers["Authorization"] = `Bearer ${token}`;
       }
       return headers;

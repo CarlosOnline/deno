@@ -64,7 +64,7 @@ export class CurlFileParser {
 
   private getCurlInfo(command: string): UrlInfo | null {
     const pattern =
-      /curl\s+-X\s+'(?<method>[^']+)'\s+'(?<url>[^']*)'\s*(?<headers>((-H\s+'[^']+')\s*)*\s*)*(-d\s+'(?<payload>.+)')?/;
+      /curl\s+-X\s+'(?<method>[^']+)'\s+'(?<url>[^']*)'\s*(?<headers>((-H\s+'[^']+')\s*)*\s*)*((-d|--data-raw)\s+'(?<payload>.+)')?/;
     const match = command.match(pattern);
     if (match?.groups) {
       const groups = match.groups;

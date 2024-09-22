@@ -73,6 +73,7 @@ export class CurlCommandRunner {
     await Utility.forEachSequential(files, async (filePath) => {
       logger.info(`Running ${filePath}`);
       const endpoints = parser.parseCurlFile(filePath);
+
       const results = await this.runEndpoints(endpoints);
       this.writeResults(results, filePath);
 
@@ -147,6 +148,8 @@ export class CurlCommandRunner {
     results: CurlCommandResult[],
     outputFilePath: string
   ) {
+    if (!Options.update) return;
+
     const updatedEndpoints = results.map((result) => {
       if (
         result.urlInfo.method != "PUT" ||
