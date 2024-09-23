@@ -59,10 +59,23 @@ export class CurlFileParser {
   }
 
   private replaceWithValues(command: string) {
-    return command.replace(/\[UniqueId\]/g, Utility.random.generateUUID());
+    while (command.indexOf("[UniqueId]") != -1) {
+      command = command.replace(/\[UniqueId\]/, Utility.random.generateUUID());
+    }
+
+    while (command.indexOf("[UniqueNumber]") != -1) {
+      command = command.replace(
+        /\[UniqueNumber\]/,
+        Utility.random.getRandomInt(1000, 9999).toString()
+      );
+    }
+
+    return command;
   }
 
   private getCurlInfo(command: string): UrlInfo | null {
+    const xid = this.getCurlId(command);
+
     const pattern =
       /curl\s+-X\s+'(?<method>[^']+)'\s+'(?<url>[^']*)'\s*(?<headers>((-H\s+'[^']+')\s*)*\s*)*((-d|--data-raw)\s+'(?<payload>.+)')?/;
     const match = command.match(pattern);
@@ -73,10 +86,23 @@ export class CurlFileParser {
         groups.method,
         groups.url,
         groups.headers,
-        groups.payload
+        groups.payload,
+        command,
+        xid
       );
     }
 
     return null;
+  }
+
+  private getCurlId(command: string): string {
+    const pattern = /.*xid: (?<xid>\d*).*/;
+    const match = command.match(pattern);
+    if (match?.groups) {
+      const groups = match.groups;
+      return groups.xid;
+    }
+
+    return "";
   }
 }

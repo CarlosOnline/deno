@@ -19,17 +19,28 @@ export class UrlInfo {
   params: { [key: string]: string } = {};
   headers: { [key: string]: string } = {};
   payload?: string;
+  original?: string;
+  xid?: string;
 
   get url() {
     return Url.getFetchUrl(this);
   }
 
-  constructor(method: string, url: string, headers?: string, payload?: string) {
+  constructor(
+    method: string,
+    url: string,
+    headers?: string,
+    payload?: string,
+    original?: string,
+    xid?: string
+  ) {
     this.method = method;
     this.hostUrl = Options.hostUrl?.replace(/\/$/, "") || Url.getHostUrl(url);
     this.endpoint = Url.getEndpoint(url);
     this.params = Url.getParams(url);
     this.headers = Url.getHeaders(headers || "");
     this.payload = parseJson(payload);
+    this.original = original;
+    this.xid = xid;
   }
 }
