@@ -21,7 +21,7 @@ export class Url {
     payload?: string,
     rawPayload?: boolean,
     original?: string,
-    xid?: string,
+    xid?: string
   ): UrlInfo {
     return new UrlInfo(
       method,
@@ -30,7 +30,7 @@ export class Url {
       payload,
       rawPayload,
       original,
-      xid,
+      xid
     );
   }
 
@@ -63,7 +63,6 @@ export class Url {
       headers: headers,
       body: payload || undefined,
     };
-    console.log(params);
 
     const url = Url.getFetchUrl(endpoint);
     if (Options.verbose) {
@@ -81,7 +80,7 @@ export class Url {
 
       if (Options.verbose) {
         logger.info(
-          `Fetch ${resp.ok} ${resp.status} ${resp.statusText} ${url}`,
+          `Fetch ${resp.ok} ${resp.status} ${resp.statusText} ${url}`
         );
       }
 
@@ -110,7 +109,7 @@ export class Url {
     if (response.error) {
       if (Options.verbose) {
         logger.error(
-          `\nFetch failed ${response.status} ${response.statusText} for xid: ${endpoint.xid} - ${endpoint.method} ${endpoint.url}\n${endpoint.original}\nError: ${response.errorMessage}`,
+          `\nFetch failed ${response.status} ${response.statusText} for xid: ${endpoint.xid} - ${endpoint.method} ${endpoint.url}\n${endpoint.original}\nError: ${response.errorMessage}`
         );
       } else {
         logger.error(
@@ -118,7 +117,7 @@ export class Url {
             endpoint.xid
           } - ${endpoint.method} ${url.substring(0, 120)}\nError: ${
             response.errorMessage
-          }`,
+          }`
         );
       }
     }
