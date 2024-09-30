@@ -34,7 +34,7 @@ export class UrlInfo {
     payload?: string,
     rawPayload?: boolean,
     original?: string,
-    xid?: string,
+    xid?: string
   ) {
     this.method = method;
     this.hostUrl = Options.hostUrl?.replace(/\/$/, "") || Url.getHostUrl(url);
@@ -42,14 +42,18 @@ export class UrlInfo {
     this.params = Url.getParams(url);
     this.headers = Url.getHeaders(headers || "");
     this.rawPayload = rawPayload || false;
-
-    this.payload = payload
-      ? this.rawPayload
-        ? payload?.replaceAll("\\\\n", "\\n")
-        : parseJson(payload)
-      : undefined;
-    this.payload = parseJson(payload);
+    this.payload = this.getPayload(payload);
     this.original = original;
     this.xid = xid;
+  }
+
+  private getPayload(payload?: string) {
+    if (!payload) return undefined;
+
+    if (this.rawPayload) {
+      return payload.replaceAll("\\\\n", "\\n").replaceAll("\\n", "\n");
+    }
+
+    return parseJson(payload);
   }
 }
