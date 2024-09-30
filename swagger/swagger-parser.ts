@@ -22,6 +22,7 @@ export type SwaggerDef = {
         summary: string;
         description: string;
         operationId: string;
+        tags: string[];
         parameters: {
           name: string;
           in: string;

@@ -7,6 +7,7 @@ const groupBy = _.default.groupBy;
 export type SwaggerEndpoint = {
   method: string;
   endpointCategory: string;
+  controller: string;
   endpoint: string;
   operationId: string;
   parameters: any[];
@@ -33,8 +34,8 @@ export class Swagger {
     const endpoints = this.extractEndPoints(swagger);
     const results = orderBy(
       endpoints,
-      ["endpointCategory", "endpoint", "method"],
-      ["asc", "asc", "asc"]
+      ["controller", "endpoint", "method"],
+      ["asc", "asc", "asc", "asc"]
     );
     return results;
   }
@@ -53,9 +54,11 @@ export class Swagger {
       for (const method in endpoint) {
         const methodInfo = endpoint[method];
         const operationId = methodInfo.operationId;
+        const controller = methodInfo.tags[0];
         endpoints.push({
           method: method,
           endpointCategory: key.replace(/\/v[0-9]+\//g, "/vX/"),
+          controller: controller,
           endpoint: key,
           operationId: operationId,
           parameters: methodInfo.parameters?.map((param) =>
