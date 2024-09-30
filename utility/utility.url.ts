@@ -17,9 +17,10 @@ export class Url {
     method: string,
     url: string,
     headers?: string,
-    payload?: string
+    payload?: string,
+    rawPayload?: boolean
   ): UrlInfo {
-    return new UrlInfo(method, url, headers, payload);
+    return new UrlInfo(method, url, headers, payload, rawPayload);
   }
 
   static async fetch(endpoint: UrlInfo, token: string): Promise<FetchResponse> {
@@ -41,11 +42,17 @@ export class Url {
 
     const headers = getHeaders();
 
+    const payload =
+      endpoint.rawPayload && endpoint.payload
+        ? endpoint.payload
+        : JSON.stringify(endpoint.payload);
+
     const params = {
       method: endpoint.method,
       headers: headers,
-      body: endpoint.payload ? JSON.stringify(endpoint.payload) : undefined,
+      body: payload || undefined,
     };
+    console.log(params);
 
     const url = Url.getFetchUrl(endpoint);
     if (Options.verbose) {
@@ -166,10 +173,12 @@ export class Url {
     (value?.split("-H") || [])
       .filter((item) => item.trim().length > 0)
       .map((item) => item.replace(/'/g, "").trim())
-      .map((item) => item.split(":"))
-      .filter((item) => item.length == 2)
       .forEach((item) => {
-        headers[item[0].trim()] = item[1].trim();
+        const idx = item.indexOf(":");
+        if (idx == -1) return;
+        const key = item.substring(0, idx).trim();
+        const value = item.substring(idx + 1).trim();
+        headers[key] = value;
       });
     return headers;
   }

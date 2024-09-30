@@ -62,9 +62,27 @@ export class CurlFileParser {
     return command.replace(/\[UniqueId\]/g, Utility.random.generateUUID());
   }
 
-  private getCurlInfo(command: string): UrlInfo | null {
+  private getCurlInfoChrome(command: string): UrlInfo | null {
     const pattern =
-      /curl\s+-X\s+'(?<method>[^']+)'\s+'(?<url>[^']*)'\s*(?<headers>((-H\s+'[^']+')\s*)*\s*)*((-d|--data-raw)\s+'(?<payload>.+)')?/;
+      /curl\s+'(?<url>[^']*)'\s*(-X\s+'(?<method>[^']+)'\s+)?(?<headers>((-H\s+'[^']+')\s*)*).*((-d|--data-raw)\s+\$?'(?<payload>.+)')?/;
+    const match = command.match(pattern);
+    if (match?.groups) {
+      const groups = match.groups;
+
+      return Url.parseUrl(
+        groups.method || "GET",
+        groups.url,
+        groups.headers,
+        groups.payload
+      );
+    }
+
+    return null;
+  }
+
+  private getCurlInfoSwagger(command: string): UrlInfo | null {
+    const pattern =
+      /curl\s+(-X\s+'(?<method>[^']+)'\s+)?'(?<url>[^']*)'\s*(?<headers>((-H\s+'[^']+')\s*)*\s*)*((-d|--data-raw)\s+\$?'(?<payload>.+)')?/;
     const match = command.match(pattern);
     if (match?.groups) {
       const groups = match.groups;
@@ -73,10 +91,23 @@ export class CurlFileParser {
         groups.method,
         groups.url,
         groups.headers,
-        groups.payload
+        groups.payload,
+        command.indexOf("--data-raw") !== -1
       );
     }
 
     return null;
+  }
+
+  private getCurlInfo(command: string): UrlInfo | null {
+    const urlInfo =
+      this.getCurlInfoSwagger(command) || this.getCurlInfoChrome(command);
+    if (!urlInfo) return null;
+
+    if (!urlInfo.method) {
+      urlInfo.method = urlInfo.payload ? "POST" : "GET";
+    }
+
+    return urlInfo;
   }
 }
