@@ -52,17 +52,30 @@ export class CurlFileParser {
         .split("\n")
         .map((line) => line.trim())
         .map((line) =>
-          line.replace(/-H 'Authorization: Bearer.*/g, authHeaderValue)
+          line.replace(/-H 'Authorization: Bearer.*/g, authHeaderValue),
         );
       return lines.join(" ");
     });
   }
 
   private replaceWithValues(command: string) {
-    return command.replace(/\[UniqueId\]/g, Utility.random.generateUUID());
+    while (command.indexOf("[UniqueId]") != -1) {
+      command = command.replace(/\[UniqueId\]/, Utility.random.generateUUID());
+    }
+
+    while (command.indexOf("[UniqueNumber]") != -1) {
+      command = command.replace(
+        /\[UniqueNumber\]/,
+        Utility.random.getRandomInt(1000, 9999).toString(),
+      );
+    }
+
+    return command;
   }
 
   private getCurlInfoChrome(command: string): UrlInfo | null {
+    const xid = this.getCurlId(command);
+
     const pattern =
       /curl\s+'(?<url>[^']*)'\s*(-X\s+'(?<method>[^']+)'\s+)?(?<headers>((-H\s+'[^']+')\s*)*).*((-d|--data-raw)\s+\$?'(?<payload>.+)')?/;
     const match = command.match(pattern);
@@ -73,7 +86,9 @@ export class CurlFileParser {
         groups.method || "GET",
         groups.url,
         groups.headers,
-        groups.payload
+        groups.payload,
+        command,
+        xid,
       );
     }
 
@@ -92,7 +107,7 @@ export class CurlFileParser {
         groups.url,
         groups.headers,
         groups.payload,
-        command.indexOf("--data-raw") !== -1
+        command.indexOf("--data-raw") !== -1,
       );
     }
 
@@ -109,5 +124,16 @@ export class CurlFileParser {
     }
 
     return urlInfo;
+  }
+
+  private getCurlId(command: string): string {
+    const pattern = /.*xid: (?<xid>\d*).*/;
+    const match = command.match(pattern);
+    if (match?.groups) {
+      const groups = match.groups;
+      return groups.xid;
+    }
+
+    return "";
   }
 }

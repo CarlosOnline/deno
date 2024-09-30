@@ -20,6 +20,8 @@ export class UrlInfo {
   headers: { [key: string]: string } = {};
   payload?: string;
   rawPayload?: boolean;
+  original?: string;
+  xid?: string;
 
   get url() {
     return Url.getFetchUrl(this);
@@ -30,7 +32,9 @@ export class UrlInfo {
     url: string,
     headers?: string,
     payload?: string,
-    rawPayload?: boolean
+    rawPayload?: boolean,
+    original?: string,
+    xid?: string,
   ) {
     this.method = method;
     this.hostUrl = Options.hostUrl?.replace(/\/$/, "") || Url.getHostUrl(url);
@@ -44,5 +48,8 @@ export class UrlInfo {
         ? payload?.replaceAll("\\\\n", "\\n")
         : parseJson(payload)
       : undefined;
+    this.payload = parseJson(payload);
+    this.original = original;
+    this.xid = xid;
   }
 }
