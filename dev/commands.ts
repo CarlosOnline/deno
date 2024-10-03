@@ -77,6 +77,10 @@ export default class DevCommands {
 
   @command("test", "test")
   testMethod() {
-    logger.info("Test method called");
+    const value = Utility.file.readFile(
+      "E:\\Projects\\Hudl\\API\\fullQuery.txt",
+    );
+    const json = JSON.stringify(value);
+    Utility.file.writeFile("E:\\Projects\\Hudl\\fetchPayload.json", json);
   }
 }
