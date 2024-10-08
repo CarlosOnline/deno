@@ -52,7 +52,7 @@ export class CurlFileParser {
         .split("\n")
         .map((line) => line.trim())
         .map((line) =>
-          line.replace(/-H 'Authorization: Bearer.*/g, authHeaderValue),
+          line.replace(/-H 'Authorization: Bearer.*/g, authHeaderValue)
         );
       return lines.join(" ");
     });
@@ -66,7 +66,7 @@ export class CurlFileParser {
     while (command.indexOf("[UniqueNumber]") != -1) {
       command = command.replace(
         /\[UniqueNumber\]/,
-        Utility.random.getRandomInt(1000, 9999).toString(),
+        Utility.random.getRandomInt(1000, 9999).toString()
       );
     }
 
@@ -87,8 +87,9 @@ export class CurlFileParser {
         groups.url,
         groups.headers,
         groups.payload,
+        false,
         command,
-        xid,
+        xid
       );
     }
 
@@ -107,7 +108,7 @@ export class CurlFileParser {
         groups.url,
         groups.headers,
         groups.payload,
-        command.indexOf("--data-raw") !== -1,
+        command.indexOf("--data-raw") !== -1
       );
     }
 

@@ -8,6 +8,7 @@ import {
   logger,
   Utility,
 } from "../utility/index.ts";
+import { DeployInfo } from "./deploy-info.ts";
 
 export class Oc {
   async project() {
@@ -24,7 +25,31 @@ export class Oc {
     return results;
   }
 
-  async login(env: string) {
+  async login(deploy: DeployInfo) {
+    const userName = Deno.env.get("USERNAME") as string;
+    const password = await this.getPassword();
+
+    if (!password || !userName || !deploy.project || !deploy.server) {
+      logger.error("Missing password, username, project or server.");
+      return;
+    }
+
+    // oc login -u=carlos.gomes -p=**** -s=%_Server% -n %_Project%
+    console.log(
+      `oc login -u=${userName} -p=**** -n=${deploy.project} -s=${deploy.server}`
+    );
+
+    const results = await this.runAsync([
+      "login",
+      `-u=${userName}`,
+      `-p=${password}`,
+      `-n=${deploy.project}`,
+      `-s=${deploy.server}`,
+    ]);
+    return results;
+  }
+
+  async loginEnv(env: string) {
     const userName = Deno.env.get("USERNAME") as string;
     const project = Options.project || Options.openshift[env].project;
     const server = Options.server || Options.openshift[env].server;
@@ -48,7 +73,9 @@ export class Oc {
     return results;
   }
 
-  static async deploy(url: string, profile: string) {
+  static async deploy(url: string, deployInfo: DeployInfo) {
+    const profile = deployInfo.project;
+
     const rex = new RegExp(
       `https:\/\/artifactory[a-z-]+.[a-z]+.com\/artifactory\/[a-z-]+\/(?<api>[^/]+)\/(?<api2>.+)-.*.tgz`
     );
@@ -67,7 +94,7 @@ export class Oc {
 
     const oc = new Oc();
     const project = await oc.project();
-    if (!project || !project.endsWith(profile)) {
+    if (!project || project != profile) {
       logger.fatal(`Project ${project} not set to ${profile}`);
       return;
     }
@@ -77,7 +104,7 @@ export class Oc {
     const deleteCommandLine = `helm delete ${api}`;
     logger.info(deleteCommandLine);
 
-    const commandLine = `helm upgrade -i --set profile=${profile} ${api} ${url}`;
+    const commandLine = `helm upgrade -i --set profile=${deployInfo.env} ${api} ${url}`;
     logger.info(commandLine);
 
     const proceed = confirm(

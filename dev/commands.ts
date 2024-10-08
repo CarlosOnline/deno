@@ -4,6 +4,7 @@ import { command } from "../support/index.ts";
 import Options from "../support/options.ts";
 import { logger, Utility } from "../utility/index.ts";
 import { Oc } from "./index.ts";
+import { DeployInfo } from "./deploy-info.ts";
 import Token from "./token.ts";
 
 export default class DevCommands {
@@ -14,10 +15,12 @@ export default class DevCommands {
 
   @command("deploy, oc.deploy", "Deploy to OpenShift", [
     "deploy env https://artifactory.company.com/artifactory/oc-project/XXXX-api/XXX-api-2.1.7-beta.40.tgz",
+    "deploy env https://artifactory.company.com/artifactory/oc-project/XXXX-api/XXX-api-2.1.7-beta.40.tgz --login --server beta",
   ])
   async deploy() {
     const profileArg = Options.getArg(1) || "";
     const profile: string = Options.profile || profileArg || "dev";
+
     if (!profile) {
       throw new Error("Missing profile");
     }
@@ -27,13 +30,16 @@ export default class DevCommands {
       logger.fatal("Missing download Uri");
     }
 
+    const deployInfo = DeployInfo.getDeploymentInfo(profile);
+    console.log(deployInfo);
+
     if (Options.login) {
       const oc = new Oc();
-      await oc.login(profile);
+      await oc.login(deployInfo);
       await oc.logProject();
     }
 
-    await Oc.deploy(url, profile);
+    await Oc.deploy(url, deployInfo);
   }
 
   @command("token", "Get authorization token", [
@@ -68,10 +74,13 @@ export default class DevCommands {
       logger.fatal("Missing download environment");
     }
 
-    const env: string = Options.url || Options.args[1];
+    const profile: string = Options.url || Options.project || Options.args[1];
+
+    const deployInfo = DeployInfo.getDeploymentInfo(profile);
+    console.log(deployInfo);
 
     const oc = new Oc();
-    await oc.login(env);
+    await oc.login(deployInfo);
     await oc.logProject();
   }
 
