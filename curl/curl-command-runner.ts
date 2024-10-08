@@ -73,6 +73,10 @@ export class CurlCommandRunner {
     await Utility.forEachSequential(files, async (filePath) => {
       logger.info(`Running ${filePath}`);
       const endpoints = parser.parseCurlFile(filePath);
+      if (!endpoints || !endpoints.length) {
+        logger.warn(`No endpoints found in ${filePath}`);
+        return;
+      }
 
       const results = await this.runEndpoints(endpoints);
       this.writeResults(results, filePath);
@@ -101,6 +105,11 @@ export class CurlCommandRunner {
     await Utility.forEachParallel(files, async (filePath) => {
       logger.info(`Running ${filePath}`);
       const endpoints = parser.parseCurlFile(filePath);
+      if (!endpoints || !endpoints.length) {
+        logger.warn(`No endpoints found in ${filePath}`);
+        return;
+      }
+
       const results = await this.runEndpoints(endpoints);
       this.writeResults(results, filePath);
 

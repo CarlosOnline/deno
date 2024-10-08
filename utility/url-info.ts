@@ -21,7 +21,6 @@ export class UrlInfo {
   payload?: string;
   rawPayload?: boolean;
   original?: string;
-  xid?: string;
 
   get url() {
     return Url.getFetchUrl(this);
@@ -33,8 +32,7 @@ export class UrlInfo {
     headers?: string,
     payload?: string,
     rawPayload?: boolean,
-    original?: string,
-    xid?: string
+    original?: string
   ) {
     this.method = method;
     this.hostUrl = Options.hostUrl?.replace(/\/$/, "") || Url.getHostUrl(url);
@@ -44,7 +42,6 @@ export class UrlInfo {
     this.rawPayload = rawPayload || false;
     this.payload = this.getPayload(payload);
     this.original = original;
-    this.xid = xid;
   }
 
   private getPayload(payload?: string) {

@@ -10,7 +10,6 @@ export type FetchResponse = {
   headers?: Headers;
   body?: string | null;
   bodyLength?: number | undefined;
-  xid?: string;
 };
 
 export class Url {
@@ -20,18 +19,9 @@ export class Url {
     headers?: string,
     payload?: string,
     rawPayload?: boolean,
-    original?: string,
-    xid?: string
+    original?: string
   ): UrlInfo {
-    return new UrlInfo(
-      method,
-      url,
-      headers,
-      payload,
-      rawPayload,
-      original,
-      xid
-    );
+    return new UrlInfo(method, url, headers, payload, rawPayload, original);
   }
 
   static async fetch(endpoint: UrlInfo, token: string): Promise<FetchResponse> {
@@ -109,15 +99,13 @@ export class Url {
     if (response.error) {
       if (Options.verbose) {
         logger.error(
-          `\nFetch failed ${response.status} ${response.statusText} for xid: ${endpoint.xid} - ${endpoint.method} ${endpoint.url}\n${endpoint.original}\nError: ${response.errorMessage}`
+          `\nFetch failed ${response.status} ${response.statusText} for ${endpoint.method} ${endpoint.url}\n${endpoint.original}\nError: ${response.errorMessage}`
         );
       } else {
         logger.error(
-          `\nFetch failed ${response.status} ${response.statusText} for xid: ${
-            endpoint.xid
-          } - ${endpoint.method} ${url.substring(0, 120)}\nError: ${
-            response.errorMessage
-          }`
+          `\nFetch failed ${response.status} ${response.statusText} for ${
+            endpoint.method
+          } ${url.substring(0, 120)}\nError: ${response.errorMessage}`
         );
       }
     }

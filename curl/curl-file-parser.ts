@@ -1,5 +1,16 @@
 // deno-lint-ignore-file no-explicit-any
+import { parse } from "https://deno.land/std@0.200.0/path/parse.ts";
+import CurlParser from "../support/curl-parser/parser.ts";
 import { Utility, Url, UrlInfo } from "../utility/index.ts";
+
+interface CurlArg {
+  key: string;
+  value: string;
+
+  line: string;
+  originalKey: string;
+  originalValue: string;
+}
 
 export class CurlFileParser {
   parseCurlFile(filePath: string) {
@@ -73,61 +84,52 @@ export class CurlFileParser {
     return command;
   }
 
-  private getCurlInfoChrome(command: string): UrlInfo | null {
-    const xid = this.getCurlId(command);
-
-    const pattern =
-      /curl\s+'(?<url>[^']*)'\s*(-X\s+'(?<method>[^']+)'\s+)?(?<headers>((-H\s+'[^']+')\s*)*)((-d|--data-raw)\s+\$?'(?<payload>.+)')?/;
-    const match = command.match(pattern);
-    if (match?.groups) {
-      const groups = match.groups;
-
-      return Url.parseUrl(
-        groups.method || "GET",
-        groups.url,
-        groups.headers,
-        groups.payload,
-        false,
-        command,
-        xid
-      );
-    }
-
-    return null;
-  }
-
-  private getCurlInfoSwagger(command: string): UrlInfo | null {
-    const pattern =
-      /curl\s+(-X\s+'(?<method>[^']+)'\s+)?'(?<url>[^']*)'\s*(?<headers>((-H\s+'[^']+')\s*)*\s*)*((-d|--data-raw)\s+\$?'(?<payload>.+)')?/;
-    const match = command.match(pattern);
-    if (match?.groups) {
-      const groups = match.groups;
-
-      return Url.parseUrl(
-        groups.method,
-        groups.url,
-        groups.headers,
-        groups.payload,
-        command.indexOf("--data-raw") !== -1
-      );
-    }
-
-    return null;
-  }
-
   private getCurlInfoRaw(command: string): UrlInfo | null {
-    const urlInfoSwagger = this.getCurlInfoSwagger(command);
-    const urlInfoChrome = this.getCurlInfoChrome(command);
+    const parser = new CurlParser(command);
+    const parsed = parser.parse();
+    console.log("parsed", parsed);
+    if (parsed) {
+      const headers = Object.keys(parsed.headers).map((key) => {
+        return `-H '${key}: ${parsed.headers[key]}'`;
+      });
 
-    if (urlInfoSwagger && urlInfoSwagger.url && urlInfoSwagger.method) {
-      return urlInfoSwagger;
+      const payload = parsed.body.data
+        ? parsed.body.raw
+          ? parsed.body.data
+          : JSON.stringify(parsed.body.data)
+        : "";
+
+      return Url.parseUrl(
+        parsed.method || "GET",
+        parsed.url,
+        headers.join(" "),
+        payload,
+        parsed.body.raw,
+        command
+      );
     }
 
-    if (urlInfoChrome && urlInfoChrome.url && urlInfoChrome.method) {
-      return urlInfoChrome;
-    }
+    const patterns = [
+      /curl\s+'(?<url>[^']*)'\s*(-X\s+'(?<method>[^']+)'\s+)?(?<headers>((-H\s+'[^']+')\s*)*)((-d|--data-raw)\s+\$?'(?<payload>.+)')?/,
+      /curl\s+(-X\s+'(?<method>[^']+)'\s+)?'(?<url>[^']*)'\s*(?<headers>((-H\s+'[^']+')\s*)*\s*)*((-d|--data-raw)\s+\$?'(?<payload>.+)')?/,
+    ];
+    patterns.forEach((pattern) => {
+      const match = command.match(pattern);
+      if (match?.groups) {
+        const groups = match.groups;
 
-    return urlInfoChrome || urlInfoSwagger || null;
+        return Url.parseUrl(
+          groups.method || "GET",
+          groups.url,
+          groups.headers,
+          groups.payload,
+          false,
+          command
+        );
+      }
+    });
+
+    return null;
   }
 
   private getCurlInfo(command: string): UrlInfo | null {
@@ -139,16 +141,5 @@ export class CurlFileParser {
     }
 
     return urlInfo;
-  }
-
-  private getCurlId(command: string): string {
-    const pattern = /.*xid: (?<xid>\d*).*/;
-    const match = command.match(pattern);
-    if (match?.groups) {
-      const groups = match.groups;
-      return groups.xid;
-    }
-
-    return "";
   }
 }
