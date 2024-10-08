@@ -28,11 +28,12 @@ export class DefaultOptions extends VisualStudioOptions {
   options: string | string[] = "";
   scriptFolder = "";
   args: string[] = [];
+  authToken: string = "none";
   brave = `${Deno.env.get(
-    "USERPROFILE"
+    "USERPROFILE",
   )}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;
   browser = `${Deno.env.get(
-    "USERPROFILE"
+    "USERPROFILE",
   )}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;
   chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
   cwdBackup = Deno.cwd();

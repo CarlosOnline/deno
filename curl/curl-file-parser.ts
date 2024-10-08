@@ -77,7 +77,7 @@ export class CurlFileParser {
     const xid = this.getCurlId(command);
 
     const pattern =
-      /curl\s+'(?<url>[^']*)'\s*(-X\s+'(?<method>[^']+)'\s+)?(?<headers>((-H\s+'[^']+')\s*)*).*((-d|--data-raw)\s+\$?'(?<payload>.+)')?/;
+      /curl\s+'(?<url>[^']*)'\s*(-X\s+'(?<method>[^']+)'\s+)?(?<headers>((-H\s+'[^']+')\s*)*)((-d|--data-raw)\s+\$?'(?<payload>.+)')?/;
     const match = command.match(pattern);
     if (match?.groups) {
       const groups = match.groups;
@@ -115,9 +115,23 @@ export class CurlFileParser {
     return null;
   }
 
+  private getCurlInfoRaw(command: string): UrlInfo | null {
+    const urlInfoSwagger = this.getCurlInfoSwagger(command);
+    const urlInfoChrome = this.getCurlInfoChrome(command);
+
+    if (urlInfoSwagger && urlInfoSwagger.url && urlInfoSwagger.method) {
+      return urlInfoSwagger;
+    }
+
+    if (urlInfoChrome && urlInfoChrome.url && urlInfoChrome.method) {
+      return urlInfoChrome;
+    }
+
+    return urlInfoChrome || urlInfoSwagger || null;
+  }
+
   private getCurlInfo(command: string): UrlInfo | null {
-    const urlInfo =
-      this.getCurlInfoSwagger(command) || this.getCurlInfoChrome(command);
+    const urlInfo = this.getCurlInfoRaw(command);
     if (!urlInfo) return null;
 
     if (!urlInfo.method) {
