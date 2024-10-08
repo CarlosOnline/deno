@@ -52,7 +52,7 @@ export class CurlFileParser {
         .split("\n")
         .map((line) => line.trim())
         .map((line) =>
-          line.replace(/-H 'Authorization: Bearer.*/g, authHeaderValue),
+          line.replace(/-H 'Authorization: Bearer.*/g, authHeaderValue)
         );
       return lines.join(" ");
     });
