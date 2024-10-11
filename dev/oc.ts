@@ -94,8 +94,14 @@ export class Oc {
 
     const oc = new Oc();
     const project = await oc.project();
-    if (!project || project != profile) {
-      logger.fatal(`Project ${project} not set to ${profile}`);
+
+    const projectDeployInfo = DeployInfo.parseNamespace(profile);
+    console.log(projectDeployInfo);
+
+    if (!project || projectDeployInfo.env != deployInfo.env) {
+      logger.fatal(
+        `Project ${project} not set to ${profile} using ${deployInfo.env}`
+      );
       return;
     }
 

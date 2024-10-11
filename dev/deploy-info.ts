@@ -31,12 +31,7 @@ export class DeployInfo {
     return deployInfo;
   }
 
-  private static getServiceName(project: string) {
-    const parts = project.split("-");
-    return parts.slice(1, parts.length - 1).join("-");
-  }
-
-  private static parseNamespace(value: string) {
+  static parseNamespace(value: string) {
     const parts = value.split("-");
     const env = parts[parts.length - 1];
     let namePrefix = "";
@@ -63,6 +58,11 @@ export class DeployInfo {
       env: env,
       server: Options.server || "",
     } as DeployInfo;
+  }
+
+  private static getServiceName(project: string) {
+    const parts = project.split("-");
+    return parts.slice(1, parts.length - 1).join("-");
   }
 
   private static findOpenshiftConfig(namespace: DeployInfo) {
