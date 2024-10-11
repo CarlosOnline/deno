@@ -98,6 +98,14 @@ export default class GitCommands {
     await GitCommands.runGitCommand(GitCommands.pullRepo);
   }
 
+  @command("git.ssh_remote", "Set remote")
+  async sshRemote() {
+    await GitCommands.runGitCommand(GitCommands.setSshRemote);
+    if (Options.pull) {
+      await GitCommands.runGitCommand(GitCommands.pullRepo);
+    }
+  }
+
   @command("git.status", "Get status")
   async status() {
     await GitCommands.runGitCommand(GitCommands.statusLogOfRepo);
@@ -435,5 +443,20 @@ export default class GitCommands {
         );
         return proceed;
       });
+  }
+
+  private static async setSshRemote(folder: string) {
+    logger.highlight(`ssh-remote ${folder}`);
+
+    const git = new Git();
+    const config = await git.info(folder);
+    if (!config) {
+      logger.error(`Not a git repository for ${folder}`);
+      return;
+    }
+
+    await git.sshRemote(config, folder);
+
+    logger.highlight(`ssh remoted ${folder}`);
   }
 }

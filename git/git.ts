@@ -6,6 +6,7 @@ export interface Config {
   branch: string;
   defaultBranch: string;
   develop: string;
+  originalDevelop: string;
   folder: string;
   isMainBranch: boolean;
   isSpecialBranch: boolean;
@@ -20,6 +21,7 @@ const DefaultConfig: Config = {
   branch: "",
   defaultBranch: "",
   develop: "",
+  originalDevelop: "",
   folder: "",
   isMainBranch: false,
   isSpecialBranch: false,
@@ -51,7 +53,9 @@ function isSpecialBranch(branch: string, config: Config | null = null) {
     branch == "HEAD" ||
     branch == "master" ||
     branch == "main" ||
-    branch == "develop"
+    branch == "develop" ||
+    (Options.develop && branch == Options.develop) ||
+    (Options.git.develop && branch == Options.git.develop)
   ) {
     return true;
   }
@@ -188,18 +192,39 @@ export class Git {
     config.defaultBranch = await this.defaultBranch(folder);
     config.status = await this.status(folder);
     config.develop = config.defaultBranch;
+    config.originalDevelop = config.develop;
     config.remotes = await this.remoteBranches(folder);
     const locals = await this.localBranches(folder);
     config.locals = locals.filter((item) => !config.remotes.includes(item));
 
-    const mainBranches = [config.defaultBranch, ...Options.git.mainBranches];
+    let overrodeDevelop = false;
+
+    if (Options.develop && Options.develop != "develop") {
+      const developBranch = config.remotes.find(
+        (item) => item == Options.develop
+      );
+      if (developBranch) {
+        overrodeDevelop = true;
+        config.develop = developBranch;
+        logger.warn(`Using ${developBranch} as develop branch`);
+      }
+    }
+
+    const mainBranches = [
+      config.defaultBranch,
+      ...Options.git.mainBranches,
+      Options.develop || Options.git.develop,
+    ];
     const remoteMainBranches = config.remotes.filter((value) =>
       mainBranches.includes(value)
     );
     config.isMainBranch = remoteMainBranches.indexOf(config.branch) != -1;
 
     if (remoteMainBranches.indexOf(Options.git.develop) != -1) {
-      config.develop = Options.git.develop;
+      config.originalDevelop = Options.git.develop;
+      if (!overrodeDevelop) {
+        config.develop = Options.git.develop;
+      }
     }
 
     if (Options.prune) {
@@ -312,6 +337,20 @@ export class Git {
     if (!config) return [];
 
     await this.runAsync("status -s".split(" "), folder);
+  }
+
+  async sshRemote(info: Config, folder: string = Deno.cwd()): Promise<void> {
+    if (!info) return;
+
+    const sshUrl = info.url.replaceAll(
+      "https://bitbucket.cotiviti.com/scm/",
+      "ssh://git@bitbucket.cotiviti.com:7999/"
+    );
+
+    if (sshUrl == info.url) return;
+
+    await this.runAsync(`remote set-url origin ${sshUrl}`.split(" "), folder);
+    await this.runAsync(`remote -v`.split(" "), folder);
   }
 
   async prune(folder: string = Deno.cwd()): Promise<void> {

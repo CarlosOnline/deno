@@ -30,10 +30,10 @@ export class DefaultOptions extends VisualStudioOptions {
   args: string[] = [];
   authToken: string = "none";
   brave = `${Deno.env.get(
-    "USERPROFILE",
+    "USERPROFILE"
   )}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;
   browser = `${Deno.env.get(
-    "USERPROFILE",
+    "USERPROFILE"
   )}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;
   chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
   cwdBackup = Deno.cwd();
@@ -42,6 +42,7 @@ export class DefaultOptions extends VisualStudioOptions {
     mainBranches: ["main", "master", "develop"],
     develop: "develop",
   };
+  //develop = "develop";  -- override develop branch
   helm = "C:/ProgramData/chocoportable/bin/helm.exe";
   mvn = {
     cmd: "c:\\Program Files\\JetBrains\\IntelliJ IDEA Community Edition 2023.2.2\\plugins\\maven\\lib\\maven3\\bin\\mvn.cmd",
