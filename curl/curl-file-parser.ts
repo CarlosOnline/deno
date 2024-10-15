@@ -87,7 +87,12 @@ export class CurlFileParser {
   private getCurlInfoRaw(command: string): UrlInfo | null {
     const parser = new CurlParser(command);
     const parsed = parser.parse();
-    console.log("parsed", parsed);
+    if (parsed.headers.authorization) {
+      parsed.headers.Authorization = parsed.headers.authorization;
+      delete parsed.headers.authorization;
+    }
+    //console.log("parsed", parsed);
+
     if (parsed) {
       const headers = Object.keys(parsed.headers).map((key) => {
         return `-H '${key}: ${parsed.headers[key]}'`;

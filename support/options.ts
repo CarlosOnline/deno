@@ -28,7 +28,7 @@ export class DefaultOptions extends VisualStudioOptions {
   options: string | string[] = "";
   scriptFolder = "";
   args: string[] = [];
-  authToken: string = "none";
+  authToken: string = ""; // "none";
   brave = `${Deno.env.get(
     "USERPROFILE"
   )}\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`;

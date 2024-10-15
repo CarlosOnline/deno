@@ -132,7 +132,7 @@ export class Oc {
 
     await Utility.run.runAsync(
       Utility.path.basename(Options.helm),
-      `upgrade -i --set profile=${profile} ${api} ${url}`.split(" "),
+      `upgrade -i --set profile=${deployInfo.env} ${api} ${url}`.split(" "),
       Utility.path.dirname(Options.helm),
       {
         skipEscape: true,

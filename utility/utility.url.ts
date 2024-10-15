@@ -114,6 +114,7 @@ export class Url {
 
     function getHeaders() {
       const headers = endpoint.headers || {};
+
       if (endpoint.payload && !headers["Content-Type"]) {
         headers["Content-Type"] = "application/json";
       }
