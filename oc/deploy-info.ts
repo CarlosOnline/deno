@@ -22,7 +22,7 @@ export class DeployInfo {
     // Override server if specified
     // --server=alpha beta or prod
     if (Options.server) {
-      const server = Options.openshiftServers[Options.server];
+      const server = Options.openshift.servers[Options.server];
       if (server) {
         deployInfo.server = server;
       }
@@ -35,19 +35,20 @@ export class DeployInfo {
     const parts = value.split("-");
     const env = parts[parts.length - 1];
     let namePrefix = "";
+    const ocPrefix = Options.openshift.projects.startsWith[0];
 
     if (parts.length > 1) {
       namePrefix = parts.slice(0, parts.length - 1).join("-");
     }
 
     if (namePrefix) {
-      if (!namePrefix.startsWith("rca-")) {
-        namePrefix = `rca-${namePrefix}`;
+      if (!namePrefix.startsWith(ocPrefix)) {
+        namePrefix = `${ocPrefix}${namePrefix}`;
       }
     }
 
     if (!namePrefix) {
-      namePrefix = `rca-ce`;
+      namePrefix = `${ocPrefix}ce`;
     }
 
     const project = Options.project || namePrefix + "-" + env;
@@ -67,20 +68,20 @@ export class DeployInfo {
 
   private static findOpenshiftConfig(namespace: DeployInfo) {
     if (namespace.project) {
-      if (Options.openshift[namespace.project]) {
-        return Options.openshift[namespace.project];
+      if (Options.openshift.environments[namespace.project]) {
+        return Options.openshift.environments[namespace.project];
       }
     }
 
     if (namespace.service) {
-      if (Options.openshift[namespace.service]) {
-        return Options.openshift[namespace.service];
+      if (Options.openshift.environments[namespace.service]) {
+        return Options.openshift.environments[namespace.service];
       }
     }
 
     if (namespace.env) {
-      if (Options.openshift[namespace.env]) {
-        return Options.openshift[namespace.env];
+      if (Options.openshift.environments[namespace.env]) {
+        return Options.openshift.environments[namespace.env];
       }
     }
 

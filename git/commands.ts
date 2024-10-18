@@ -43,9 +43,14 @@ export default class GitCommands {
     await git.deleteBranch(branch, folder);
   }
 
-  @command("git.branch_list", "Get/Create branch")
+  @command("git.branch_list", "List local branches")
   async getBranchList() {
     await GitCommands.runGitCommand(GitCommands.getBranchList);
+  }
+
+  @command("git.branch_list_remote", "List remote branches")
+  async getBranchListRemote() {
+    await GitCommands.runGitCommand(GitCommands.getBranchListRemote);
   }
 
   @command("git.clone", "Generate git clone commands")
@@ -339,6 +344,11 @@ export default class GitCommands {
   private static async getBranchList(folder: string) {
     const git = new Git();
     await git.branchList(folder);
+  }
+
+  private static async getBranchListRemote(folder: string) {
+    const git = new Git();
+    await git.branchListRemote(folder);
   }
 
   private static async info(folder: string) {

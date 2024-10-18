@@ -16,6 +16,23 @@ export class Oc {
     return results;
   }
 
+  async projects() {
+    const results = await this.runAsync(["projects", "-q"]);
+
+    const projects = results
+      .split("\n")
+      .map((item) => item.trim())
+      .filter((item) => {
+        return (
+          Options.openshift.projects.startsWith.filter((prefix: string) => {
+            return item.startsWith(prefix);
+          }).length > 0
+        );
+      });
+
+    return projects;
+  }
+
   async logProject() {
     const results = await this.runAsync(["project"], Deno.cwd(), {
       ...DefaultRunOptions,
@@ -23,6 +40,66 @@ export class Oc {
       ...{ capture: false },
     });
     return results;
+  }
+
+  async releases(namespace: string = "") {
+    const namespaceArgs = namespace ? ["--namespace", namespace] : [];
+    const output = await this.runAsync([
+      "get",
+      "deployments",
+      "--output",
+      'jsonpath="{range .items[*]}{.metadata.name} "',
+      ...namespaceArgs,
+    ]);
+
+    return output.split(" ");
+  }
+
+  async routes(namespace: string = "") {
+    const namespaceArgs = namespace ? ["--namespace", namespace] : [];
+    const output = await this.runAsync([
+      "get",
+      "routes",
+      "--output",
+      'jsonpath="{range .items[*]}{.metadata.name},{.spec.host},{.spec.tls.termination} "',
+      ...namespaceArgs,
+    ]);
+
+    return output
+      .split(" ")
+      .map((item) => {
+        const parts = item.split(",");
+        if (parts.length < 3 || !parts[0] || !parts[1]) return null;
+        return {
+          name: parts[0],
+          host: parts[1],
+          termination: parts[2],
+        };
+      })
+      .filter((item) => item);
+  }
+
+  async pods(namespace: string = "") {
+    const namespaceArgs = namespace ? ["--namespace", namespace] : [];
+    const output = await this.runAsync([
+      "get",
+      "pods",
+      "--output",
+      'jsonpath="{range .items[*]}{.metadata.name},{.metadata.labels.component} "',
+      ...namespaceArgs,
+    ]);
+
+    return output
+      .split(" ")
+      .map((item) => {
+        const parts = item.split(",");
+        if (parts.length < 2 || !parts[0] || !parts[1]) return null;
+        return {
+          name: parts[0],
+          component: parts[1],
+        };
+      })
+      .filter((item) => item);
   }
 
   async login(deploy: DeployInfo) {
@@ -51,8 +128,9 @@ export class Oc {
 
   async loginEnv(env: string) {
     const userName = Deno.env.get("USERNAME") as string;
-    const project = Options.project || Options.openshift[env].project;
-    const server = Options.server || Options.openshift[env].server;
+    const project =
+      Options.project || Options.openshift.environments[env].project;
+    const server = Options.server || Options.openshift.environments[env].server;
     const password = await this.getPassword();
 
     if (!password || !userName || !project || !server) {
@@ -166,6 +244,26 @@ export class Oc {
     });
     if (results && results.startsWith("ERROR")) {
       logger.error(`oc ${args.join(" ")} failed for ${folder}`);
+    }
+    return results;
+  }
+
+  private async runHelmAsync(
+    args: string[],
+    folder: string = Deno.cwd(),
+    runOptions: RunOptions = {
+      ...DefaultRunOptions,
+      ...{ verbose: Options.verbose },
+      ...{ capture: true },
+    }
+  ) {
+    console.log(Options.helm, args.join(" "));
+    const results = await Utility.run.runAsync(Options.helm, args, folder, {
+      ...runOptions,
+      ...{ verbose: Options.verbose },
+    });
+    if (results && results.startsWith("ERROR")) {
+      logger.error(`helm ${args.join(" ")} failed for ${folder}`);
     }
     return results;
   }

@@ -360,7 +360,7 @@ export class CurlCommandRunner {
 
   private async getTokenFromEndpoint(endpoint: UrlInfo, token: string) {
     // Extract api name from the endpoint
-    // http://enrich-rca-ce-dev.apps.ocpdev
+    // http://myname-project.apps.server
 
     const hostName = endpoint.hostUrl.split(":")[1].trim().replace("//", "");
     if (hostName.indexOf("localhost") >= 0) return token;
@@ -477,8 +477,8 @@ export class CurlCommandRunner {
         responseData?.length || Object.keys(responseData || {}).length;
 
       logger.info(
-        `${status(result.response.status).padEnd(4)} 
-        
+        `${status(result.response.status).padEnd(4)}
+
         ${result.response.statusText
           .substring(0, 24)
           .padEnd(25)} ${result.urlInfo.method.padEnd(5)}
@@ -487,9 +487,9 @@ export class CurlCommandRunner {
           ${responseDataLength.toLocaleString().padEnd(5)}
 
           ${result.urlInfo.hostUrl}/${result.urlInfo.endpoint.padEnd(20)}
-        
-        ${bodyStr} 
-        
+
+        ${bodyStr}
+
         ${red(result.response.errorMessage?.substring(0, 30) || "")}`
           .replaceAll("\r\n", "")
           .replaceAll("\r", "")

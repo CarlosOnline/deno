@@ -112,17 +112,43 @@ export class Git {
     return normalizeBranch(results);
   }
 
-  async branchList(folder: string = Deno.cwd()): Promise<string> {
+  async branchList(folder: string = Deno.cwd()) {
     const config = this.config(folder);
     if (!config) return "";
 
     logger.highlight(`Repository ${config.repo.padEnd(40)}`);
 
-    const results = await this.runAsync("branch -l".split(" "), folder);
+    const results = await this.runAsync("branch -l".split(" "), folder, {
+      capture: true,
+    });
 
-    return normalizeBranch(results);
+    logger.info(
+      results
+        .split("\n")
+        .map((item) => normalizeBranch(item))
+        .join("\n")
+    );
   }
 
+  async branchListRemote(folder: string = Deno.cwd()) {
+    const config = this.config(folder);
+    if (!config) return "";
+
+    logger.highlight(`Repository ${config.repo.padEnd(40)}`);
+
+    await this.runAsync("fetch --prune".split(" "), folder);
+
+    const results = await this.runAsync("branch -r".split(" "), folder, {
+      capture: true,
+    });
+
+    logger.info(
+      results
+        .split("\n")
+        .map((item) => normalizeBranch(item))
+        .join("\n")
+    );
+  }
   async checkout(branch: string, folder: string = Deno.cwd()) {
     const config = await this.config(folder);
     if (!config) return;
@@ -343,8 +369,8 @@ export class Git {
     if (!info) return;
 
     const sshUrl = info.url.replaceAll(
-      "https://bitbucket.cotiviti.com/scm/",
-      "ssh://git@bitbucket.cotiviti.com:7999/"
+      "https://bitbucket.company.com/scm/",
+      "ssh://git@bitbucket.company.com:7999/"
     );
 
     if (sshUrl == info.url) return;
