@@ -14,26 +14,13 @@ export default class OcCommands {
     "deploy env https://artifactory.company.com/artifactory/oc-project/XXXX-api/XXX-api-2.1.7-beta.40.tgz --login --server beta",
   ])
   async deploy() {
-    const profileArg = Options.getArg(1) || "";
-    const profile: string = Options.profile || profileArg || "dev";
-
-    if (!profile) {
-      throw new Error("Missing profile");
-    }
-
     const url: string = Options.url || Options.getArg(2);
     if (!url) {
       logger.fatal("Missing download Uri");
     }
 
-    const deployInfo = DeployInfo.getDeploymentInfo(profile);
-    console.log(deployInfo);
-
-    if (Options.login) {
-      const oc = new Oc();
-      await oc.login(deployInfo);
-      await oc.logProject();
-    }
+    const profile = OcCommands.getProfile();
+    const deployInfo = await OcCommands.ensureProfile(profile);
 
     await Oc.deploy(url, deployInfo);
   }
@@ -60,10 +47,14 @@ export default class OcCommands {
     "oc.releases dev",
   ])
   async releases() {
+    const profile = OcCommands.getProfile();
+    await OcCommands.ensureProfile(profile);
+
     const oc = new Oc();
 
-    const results = await OcCommands.runOcCommand<string[]>((project) =>
-      oc.releases(project)
+    const results = await OcCommands.runOcCommand<string[]>(
+      profile,
+      (project) => oc.releases(project)
     );
 
     results.forEach((result) => {
@@ -78,9 +69,12 @@ export default class OcCommands {
 
   @command("oc.routes", "Get OpenShift routes", ["oc.routes dev"])
   async routes() {
+    const profile = OcCommands.getProfile();
+    await OcCommands.ensureProfile(profile);
+
     const oc = new Oc();
 
-    const results = await OcCommands.runOcCommand<any[]>((project) =>
+    const results = await OcCommands.runOcCommand<any[]>(profile, (project) =>
       oc.routes(project)
     );
 
@@ -105,9 +99,12 @@ export default class OcCommands {
 
   @command("oc.pods", "Get OpenShift pods", ["oc.pods dev"])
   async pods() {
+    const profile = OcCommands.getProfile();
+    await OcCommands.ensureProfile(profile);
+
     const oc = new Oc();
 
-    const results = await OcCommands.runOcCommand<any[]>((project) =>
+    const results = await OcCommands.runOcCommand<any[]>(profile, (project) =>
       oc.pods(project)
     );
 
@@ -125,11 +122,11 @@ export default class OcCommands {
     });
   }
 
-  private static async runOcCommand<T>(action: OcActionCallback) {
+  private static async runOcCommand<T>(
+    profile: string,
+    action: OcActionCallback
+  ) {
     const oc = new Oc();
-
-    const profileArg = Options.getArg(1) || "";
-    const profile: string = Options.profile || profileArg || "dev";
 
     const projects = await oc.projects();
     const tasks = projects
@@ -142,5 +139,24 @@ export default class OcCommands {
         };
       });
     return await Promise.all(tasks);
+  }
+
+  private static getProfile(defaultProfile: string = "dev") {
+    const profileArg = Options.getArg(1) || "";
+    const profile: string = Options.profile || profileArg || defaultProfile;
+    return profile;
+  }
+
+  private static async ensureProfile(profile: string) {
+    const deployInfo = DeployInfo.getDeploymentInfo(profile);
+    console.log(deployInfo);
+
+    if (Options.login) {
+      const oc = new Oc();
+      await oc.login(deployInfo);
+      await oc.logProject();
+    }
+
+    return deployInfo;
   }
 }
