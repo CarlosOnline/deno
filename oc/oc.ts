@@ -1,5 +1,12 @@
 // deno-lint-ignore-file no-explicit-any
-import { brightYellow, red, bold } from "https://deno.land/std/fmt/colors.ts";
+import {
+  brightYellow,
+  red,
+  bold,
+  brightGreen,
+  brightCyan,
+  brightWhite,
+} from "https://deno.land/std/fmt/colors.ts";
 
 import Options from "../support/options.ts";
 import {
@@ -102,26 +109,35 @@ export class Oc {
       .filter((item) => item);
   }
 
-  async login(deploy: DeployInfo) {
+  async login(deployInfo: DeployInfo) {
     const userName = Deno.env.get("USERNAME") as string;
     const password = await this.getPassword();
 
-    if (!password || !userName || !deploy.project || !deploy.server) {
+    if (!password || !userName || !deployInfo.project || !deployInfo.server) {
       logger.error("Missing password, username, project or server.");
       return;
     }
 
+    // prettier-ignore
+    console.log(`
+Login to
+arg:        ${brightWhite(bold(deployInfo.arg))}
+project:    ${brightGreen(bold(deployInfo.project))}
+server:     ${brightCyan(bold(deployInfo.server))}
+`
+    );
+
     // oc login -u=carlos.gomes -p=**** -s=%_Server% -n %_Project%
     console.log(
-      `oc login -u=${userName} -p=**** -n=${deploy.project} -s=${deploy.server}`
+      `oc login -u=${userName} -p=**** -n=${deployInfo.project} -s=${deployInfo.server}`
     );
 
     const results = await this.runAsync([
       "login",
       `-u=${userName}`,
       `-p=${password}`,
-      `-n=${deploy.project}`,
-      `-s=${deploy.server}`,
+      `-n=${deployInfo.project}`,
+      `-s=${deployInfo.server}`,
     ]);
     return results;
   }

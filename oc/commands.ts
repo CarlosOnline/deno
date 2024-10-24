@@ -1,4 +1,10 @@
 // deno-lint-ignore-file no-explicit-any
+import {
+  bold,
+  brightGreen,
+  brightWhite,
+  brightCyan,
+} from "https://deno.land/std/fmt/colors.ts";
 
 import { command } from "../support/index.ts";
 import Options from "../support/options.ts";
@@ -9,6 +15,26 @@ import { DeployInfo } from "./deploy-info.ts";
 type OcActionCallback = (project: string) => Promise<any>;
 
 export default class OcCommands {
+  @command("oc.login", "Login to openshift environment", [
+    "oc.login dev --promptPassword",
+  ])
+  async openShiftLogin() {
+    if (!Options.env && Options.args.length < 2) {
+      logger.fatal("Missing download environment");
+    }
+
+    const profile: string = Options.url || Options.project || Options.args[1];
+
+    const deployInfo = DeployInfo.getDeploymentInfo(profile);
+    if (Options.verbose) {
+      console.log(deployInfo);
+    }
+
+    const oc = new Oc();
+    await oc.login(deployInfo);
+    await oc.logProject();
+  }
+
   @command("deploy, oc.deploy", "Deploy to OpenShift", [
     "deploy env https://artifactory.company.com/artifactory/oc-project/XXXX-api/XXX-api-2.1.7-beta.40.tgz",
     "deploy env https://artifactory.company.com/artifactory/oc-project/XXXX-api/XXX-api-2.1.7-beta.40.tgz --login --server beta",
@@ -25,35 +51,17 @@ export default class OcCommands {
     await Oc.deploy(url, deployInfo);
   }
 
-  @command("oc.login", "Login to openshift environment", [
-    "oc.login dev --promptPassword",
-  ])
-  async openShiftLogin() {
-    if (!Options.env && Options.args.length < 2) {
-      logger.fatal("Missing download environment");
-    }
-
-    const profile: string = Options.url || Options.project || Options.args[1];
-
-    const deployInfo = DeployInfo.getDeploymentInfo(profile);
-    console.log(deployInfo);
-
-    const oc = new Oc();
-    await oc.login(deployInfo);
-    await oc.logProject();
-  }
-
   @command("helm.list,oc.deployments", "Get OpenShift releases", [
     "oc.releases dev",
   ])
   async releases() {
     const profile = OcCommands.getProfile();
-    await OcCommands.ensureProfile(profile);
+    const deployInfo = await OcCommands.ensureProfile(profile);
 
     const oc = new Oc();
 
     const results = await OcCommands.runOcCommand<string[]>(
-      profile,
+      deployInfo,
       (project) => oc.releases(project)
     );
 
@@ -70,12 +78,13 @@ export default class OcCommands {
   @command("oc.routes", "Get OpenShift routes", ["oc.routes dev"])
   async routes() {
     const profile = OcCommands.getProfile();
-    await OcCommands.ensureProfile(profile);
+    const deployInfo = await OcCommands.ensureProfile(profile);
 
     const oc = new Oc();
 
-    const results = await OcCommands.runOcCommand<any[]>(profile, (project) =>
-      oc.routes(project)
+    const results = await OcCommands.runOcCommand<any[]>(
+      deployInfo,
+      (project) => oc.routes(project)
     );
 
     results.forEach((result) => {
@@ -100,12 +109,13 @@ export default class OcCommands {
   @command("oc.pods", "Get OpenShift pods", ["oc.pods dev"])
   async pods() {
     const profile = OcCommands.getProfile();
-    await OcCommands.ensureProfile(profile);
+    const deployInfo = await OcCommands.ensureProfile(profile);
 
     const oc = new Oc();
 
-    const results = await OcCommands.runOcCommand<any[]>(profile, (project) =>
-      oc.pods(project)
+    const results = await OcCommands.runOcCommand<any[]>(
+      deployInfo,
+      (project) => oc.pods(project)
     );
 
     results.forEach((result) => {
@@ -123,14 +133,27 @@ export default class OcCommands {
   }
 
   private static async runOcCommand<T>(
-    profile: string,
+    deployInfo: DeployInfo,
     action: OcActionCallback
   ) {
+    const serverName = deployInfo.server
+      .replaceAll("https://", "")
+      .split(":")[0];
+
+    // prettier-ignore
+    console.log(`
+Running for
+arg:        ${brightGreen(bold(deployInfo.arg))}
+project:    ${brightWhite(bold(deployInfo.project))}
+server:     ${brightCyan(bold(serverName))}
+`
+    );
+
     const oc = new Oc();
 
     const projects = await oc.projects();
     const tasks = projects
-      .filter((project) => project.endsWith(profile))
+      .filter((project) => project.endsWith(deployInfo.arg))
       .map(async (project) => {
         const results = await action(project);
         return {
@@ -149,7 +172,9 @@ export default class OcCommands {
 
   private static async ensureProfile(profile: string) {
     const deployInfo = DeployInfo.getDeploymentInfo(profile);
-    console.log(deployInfo);
+    if (Options.verbose) {
+      console.log(deployInfo);
+    }
 
     if (Options.login) {
       const oc = new Oc();

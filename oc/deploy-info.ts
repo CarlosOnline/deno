@@ -1,6 +1,7 @@
 import Options from "../support/options.ts";
 
 export interface DeployInfo {
+  arg: string;
   project: string;
   service: string;
   env: string;
@@ -31,7 +32,7 @@ export class DeployInfo {
     return deployInfo;
   }
 
-  static parseNamespace(value: string) {
+  static parseNamespace(value: string): DeployInfo {
     const parts = value.split("-");
     const env = parts[parts.length - 1];
     let namePrefix = "";
@@ -54,11 +55,12 @@ export class DeployInfo {
     const project = Options.project || namePrefix + "-" + env;
 
     return {
+      arg: value,
       project: project,
       service: DeployInfo.getServiceName(project),
       env: env,
       server: Options.server || "",
-    } as DeployInfo;
+    };
   }
 
   private static getServiceName(project: string) {
