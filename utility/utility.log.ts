@@ -6,7 +6,7 @@ export class Log {
   static trace(...args: any[]) {
     const message = args.join(" ");
     const text = new TextEncoder().encode(message);
-    Deno.writeAllSync(Deno.stdout, text);
+    Deno.stdout.writeSync(text);
   }
 
   static info(...args: any[]) {
