@@ -116,7 +116,9 @@ export default class CurlParser {
     const yargObj = this.yargObj;
     let me = this.getFirstItem("X") || "GET";
     if (Reflect.has(yargObj, "d") || Reflect.has(yargObj, "F")) {
-      me = "POST";
+      if (me === "GET") {
+        me = "POST";
+      }
     }
 
     return me.toUpperCase();

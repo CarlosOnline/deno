@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
-import { parse } from "https://deno.land/std@0.200.0/path/parse.ts";
 import CurlParser from "../support/curl-parser/parser.ts";
+import Options from "../support/options.ts";
 import { Utility, Url, UrlInfo } from "../utility/index.ts";
 
 interface CurlArg {
@@ -63,7 +63,9 @@ export class CurlFileParser {
         .split("\n")
         .map((line) => line.trim())
         .map((line) =>
-          line.replace(/-H 'Authorization: Bearer.*/g, authHeaderValue)
+          Options.skipAuth
+            ? line
+            : line.replace(/-H 'Authorization: Bearer.*/g, authHeaderValue)
         );
       return lines.join(" ");
     });
@@ -87,6 +89,7 @@ export class CurlFileParser {
   private getCurlInfoRaw(command: string): UrlInfo | null {
     const parser = new CurlParser(command);
     const parsed = parser.parse();
+
     if (parsed.headers.authorization) {
       parsed.headers.Authorization = parsed.headers.authorization;
       delete parsed.headers.authorization;

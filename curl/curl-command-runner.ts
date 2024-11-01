@@ -380,6 +380,7 @@ export class CurlCommandRunner {
   }
 
   private async getTokenWorker(service: string, env: string) {
+    if (Options.skipAuth) return "none";
     if (Options.authToken) return Options.authToken;
 
     const token = await Token.getToken(service, env, false);

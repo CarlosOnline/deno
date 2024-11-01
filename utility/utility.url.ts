@@ -119,7 +119,7 @@ export class Url {
         headers["Content-Type"] = "application/json";
       }
 
-      if (token && token != "none") {
+      if (!Options.skipAuth && token && token != "none") {
         headers["Authorization"] = `Bearer ${token}`;
       }
       return headers;

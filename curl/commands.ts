@@ -9,6 +9,7 @@ export default class CurlCommands {
   @command("curl.run", "Run curl commands from specified folder or file", [
     "curl.run c:\\Temp\\Api",
     "curl.run c:\\Temp\\Api\\tests.md --authToken *****",
+    "curl.run c:\\Temp\\Api\\tests.md --skipAuth *****",
     "curl.run c:\\Temp\\Api\\tests.md --service spotcheck --env uat",
     "curl.run c:\\Temp\\Api\\tests.md --hostUrl=https://my-service.com",
   ])
