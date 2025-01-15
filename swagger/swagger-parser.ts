@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any ban-unused-ignore
 import Options from "../support/options.ts";
 import { Url, Utility } from "../utility/index.ts";
 

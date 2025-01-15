@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any ban-unused-ignore
 import { OpenOptions, open } from "https://deno.land/x/open/index.ts";
 import * as clipboard from "https://deno.land/x/copy_paste@v1.1.3/mod.ts";
 import { sleep } from "https://deno.land/x/sleep/mod.ts";

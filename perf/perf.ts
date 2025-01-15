@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any ban-unused-ignore
 import Token from "../dev/token.ts";
 import { Sql } from "../sql/sql.ts";
 import Options from "../support/options.ts";

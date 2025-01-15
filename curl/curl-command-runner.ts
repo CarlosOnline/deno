@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any ban-unused-ignore
 import Token from "../dev/token.ts";
 import Options from "../support/options.ts";
 import { logger, Utility, Url, UrlInfo } from "../utility/index.ts";
@@ -482,7 +482,7 @@ export class CurlCommandRunner {
 
         ${result.response.statusText
           .substring(0, 24)
-          .padEnd(25)} ${result.urlInfo.method.padEnd(5)}
+          .padEnd(25)} ${result.urlInfo.method.padEnd(6)}
 
           ${totalCount.toLocaleString().padEnd(6)}
           ${responseDataLength.toLocaleString().padEnd(5)}

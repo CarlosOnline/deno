@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any ban-unused-ignore
 import { loadEnvironmentFile } from "../support/options.ts";
 import { logger } from "../utility/index.ts";
 import Options from "../support/options.ts";

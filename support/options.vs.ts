@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any ban-unused-ignore
 import { dirname } from "https://deno.land/std/path/mod.ts";
 import { logger, Utility } from "../utility/index.ts";
 

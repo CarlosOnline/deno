@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any ban-unused-ignore
 import { SwaggerParser, SwaggerDef } from "./swagger-parser.ts";
 import * as _ from "lodash";
 const orderBy = _.default.orderBy;
