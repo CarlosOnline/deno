@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any ban-unused-ignore
 import Options from "../support/options.ts";
 import { logger, UrlInfo } from "./index.ts";
 
@@ -13,23 +14,22 @@ export type FetchResponse = {
 };
 
 export class Url {
-  static parseUrl(
-    method: string,
-    url: string,
-    headers?: string,
-    payload?: string,
-    rawPayload?: boolean,
-    original?: string
-  ): UrlInfo {
-    return new UrlInfo(method, url, headers, payload, rawPayload, original);
-  }
-
   static async fetch(endpoint: UrlInfo, token: string): Promise<FetchResponse> {
     const response: FetchResponse = {
       ok: false,
       status: 500,
       statusText: "Unknown error",
       error: "Unknown error",
+    };
+
+    const headers = getHeaders();
+
+    const payload = Url.getPayload(endpoint);
+
+    const params = {
+      method: endpoint.method,
+      headers: headers,
+      body: payload || undefined,
     };
 
     if (Options.test || Options.dryRun) {
@@ -41,23 +41,11 @@ export class Url {
       };
     }
 
-    const headers = getHeaders();
-
-    const payload =
-      endpoint.rawPayload && endpoint.payload
-        ? endpoint.payload
-        : JSON.stringify(endpoint.payload);
-
-    const params = {
-      method: endpoint.method,
-      headers: headers,
-      body: payload || undefined,
-    };
-
     const url = Url.getFetchUrl(endpoint);
     if (Options.verbose) {
       logger.info(`Fetch ${url}`);
       console.log(endpoint);
+      console.log(params);
     }
 
     try {
@@ -89,7 +77,7 @@ export class Url {
       } else {
         response.error = body || resp.statusText || "Unknown error";
       }
-    } catch (error) {
+    } catch (error: any) {
       response.error =
         error.toString().replace(/,/g, "-") || "Unknown exception";
     }
@@ -206,5 +194,23 @@ export class Url {
     }
 
     return error;
+  }
+
+  private static getContentType(endpoint: UrlInfo): string {
+    if (endpoint.headers["content-type"]) {
+      return endpoint.headers["content-type"];
+    }
+
+    return "";
+  }
+
+  private static getPayload(endpoint: UrlInfo): string {
+    const rawPayload = endpoint.rawPayload && endpoint.payload ? true : false;
+
+    if (rawPayload) {
+      return endpoint.payload || "";
+    }
+
+    return JSON.stringify(endpoint.payload);
   }
 }

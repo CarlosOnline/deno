@@ -29,7 +29,7 @@ export class UrlInfo {
   constructor(
     method: string,
     url: string,
-    headers?: string,
+    headers?: { [key: string]: string },
     payload?: string,
     rawPayload?: boolean,
     original?: string
@@ -38,7 +38,7 @@ export class UrlInfo {
     this.hostUrl = Options.hostUrl?.replace(/\/$/, "") || Url.getHostUrl(url);
     this.endpoint = Url.getEndpoint(url);
     this.params = Url.getParams(url);
-    this.headers = Url.getHeaders(headers || "");
+    this.headers = headers || {};
     this.rawPayload = rawPayload || false;
     this.payload = this.getPayload(payload);
     this.original = original;
