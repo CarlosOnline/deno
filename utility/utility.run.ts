@@ -88,7 +88,7 @@ export class Run {
   private static runInBackgroundNoWait(commander: Deno.Command) {
     // Run process in background, Deno doesn't wait for it to finish.
     // TODO: get it to work with Windows, currently it closes the process.
-    const process = commander.spawn();
+    const _process = commander.spawn();
     setTimeout(() => {
       // TODO: process.unref();
       logger.error(

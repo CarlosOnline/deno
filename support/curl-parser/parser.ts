@@ -175,7 +175,7 @@ export default class CurlParser {
           JSON.parse(data);
           type = "application/json";
         } catch (error: any) {
-          console.error(error.message || error);
+          console.error("CurlParser: getBody() " + error.message || error);
         }
       }
     }
@@ -198,7 +198,7 @@ export default class CurlParser {
         try {
           body = JSON.parse(data);
         } catch (error: any) {
-          console.error(error.message || error);
+          console.warn("CurlParser: getBody() " + error.message || error);
           body = data;
         }
         break;

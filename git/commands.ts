@@ -65,32 +65,56 @@ export default class GitCommands {
 
   @command("git.develop", "Checkout develop")
   async checkoutDevelop() {
-    await GitCommands.runGitCommand(GitCommands.getBranch);
-    logger.info("************************************************");
+    if (Options.verbose) {
+      await GitCommands.runGitCommand(GitCommands.getBranch);
+      logger.info("************************************************");
+    }
 
+    let results: any[] = [];
     if (Options.prompt && Options.all) {
       const approvedRepos = await GitCommands.checkoutRepoForDevelop();
       const repos = approvedRepos.map((item) => item.folder);
       console.log(repos);
 
-      await GitCommands.forRepos(repos, GitCommands.checkoutDevelop);
+      results = await GitCommands.forRepos(repos, GitCommands.checkoutDevelop);
     } else {
-      await GitCommands.runGitCommand(GitCommands.checkoutDevelop);
+      results = await GitCommands.runGitCommand(GitCommands.checkoutDevelop);
     }
+
     logger.info("************************************************");
 
-    await GitCommands.runGitCommand(GitCommands.getBranch);
+    results
+      .filter((item) => !item.result)
+      .forEach((item) => {
+        logger.error(`Failed ${item.branch} ${item.folder}`);
+      });
+
+    if (Options.verbose) {
+      await GitCommands.runGitCommand(GitCommands.getBranch);
+    }
   }
 
   @command("git.merge", "Merge from develop")
   async mergeFromDevelop() {
-    await GitCommands.runGitCommand(GitCommands.getBranch);
+    if (Options.verbose) {
+      await GitCommands.runGitCommand(GitCommands.getBranch);
+      logger.info("************************************************");
+    }
+
+    const results: any[] = await GitCommands.runGitCommand(
+      GitCommands.mergeFromDevelopBranch
+    );
     logger.info("************************************************");
 
-    await GitCommands.runGitCommand(GitCommands.mergeFromDevelopBranch);
-    logger.info("************************************************");
+    results
+      .filter((item) => !item.result)
+      .forEach((item) => {
+        logger.error(`Failed ${item.branch} ${item.folder}`);
+      });
 
-    await GitCommands.runGitCommand(GitCommands.getBranch);
+    if (Options.verbose) {
+      await GitCommands.runGitCommand(GitCommands.getBranch);
+    }
   }
 
   @command("git.prune", "Prune repositories")
@@ -168,7 +192,8 @@ export default class GitCommands {
         return null;
       }
 
-      return (await action(gitFolder)) as T;
+      const result = (await action(gitFolder)) as T;
+      return [result];
     }
   }
 
@@ -228,21 +253,40 @@ export default class GitCommands {
   }
 
   private static async checkoutDevelop(folder: string) {
-    logger.highlight(`Checkout develop ${folder}`);
+    if (Options.verbose) {
+      logger.highlight(`Checkout develop ${folder}`);
+    }
 
     const git = new Git();
     const info = await git.info(folder);
     if (!info) {
       logger.error(`Not a git repository for ${folder}`);
-      return;
+      return null;
     }
 
+    let result = true;
     const branch = info.develop;
-    await git.checkout(branch, folder);
+    let response = await git.checkout(branch, folder);
+    if (response?.startsWith("ERROR:")) {
+      logger.warn(`Error checking out ${branch} ${folder}`);
+      result = false;
+    }
 
-    await git.pull(folder);
+    response = await git.pull(folder);
+    if (response?.startsWith("ERROR:")) {
+      logger.warn(`Error pulling ${branch} ${folder}`);
+      result = false;
+    }
 
-    logger.highlight(`Checked out ${branch} ${folder}`);
+    if (Options.verbose) {
+      logger.highlight(`Checked out ${branch} ${folder}`);
+    }
+
+    return {
+      result: result,
+      branch: branch,
+      folder: folder,
+    };
   }
 
   private static async createBranch(folder: string) {
@@ -325,13 +369,31 @@ export default class GitCommands {
       return;
     }
 
-    logger.highlight(`Merging ${folder} ${info.develop} into ${info.branch}`);
+    if (Options.verbose) {
+      logger.highlight(`Merging ${folder} ${info.develop} into ${info.branch}`);
+    }
 
     if (Options.reset) {
       await git.reset();
     }
 
-    await git.mergeFromBranch(`origin/${info.develop}`, folder);
+    const response = await git.mergeFromBranch(
+      `origin/${info.develop}`,
+      folder
+    );
+
+    let result = true;
+
+    if (response?.startsWith("ERROR:")) {
+      logger.warn(`Error merging ${info.branch} ${folder}`);
+      result = false;
+    }
+
+    return {
+      result: result,
+      branch: info.branch,
+      folder: folder,
+    };
   }
 
   private static async getBranch(folder: string) {

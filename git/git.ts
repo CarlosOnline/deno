@@ -153,7 +153,7 @@ export class Git {
     const config = await this.config(folder);
     if (!config) return;
 
-    await this.runAsync(`checkout ${branch}`.split(" "), folder);
+    return await this.runAsync(`checkout ${branch}`.split(" "), folder);
   }
 
   async createBranch(
@@ -280,23 +280,30 @@ export class Git {
   }
 
   async merge(branch: string, folder: string = Deno.cwd()) {
-    await this.runAsync(`merge ${branch}`.split(" "), folder);
+    return await this.runAsync(`merge ${branch}`.split(" "), folder);
   }
 
   async mergeFromBranch(branch: string, folder: string = Deno.cwd()) {
     const info = await this.info(folder);
     if (!info) return;
 
-    await this.pull(folder);
+    let response = await this.pull(folder);
 
     if (normalizeBranch(info.branch) == normalizeBranch(branch)) {
-      logger.info(`Pulled ${branch} into ${folder}`);
+      if (Options.verbose) {
+        logger.info(`Pulled ${branch} into ${folder}`);
+      }
+
       return;
     }
 
-    await this.merge(branch, folder);
+    response += await this.merge(branch, folder);
 
-    logger.info(`Merged ${branch} into ${info.branch} for ${folder}`);
+    if (Options.verbose) {
+      logger.info(`Merged ${branch} into ${info.branch} for ${folder}`);
+    }
+
+    return response;
   }
 
   async localBranches(folder: string = Deno.cwd()): Promise<string[]> {
@@ -421,11 +428,13 @@ export class Git {
   }
 
   async pull(folder: string = Deno.cwd()) {
-    await this.runAsync("pull".split(" "), folder);
+    const results = await this.runAsync("pull".split(" "), folder);
 
     if (Options.update) {
       await this.updateRemote(folder);
     }
+
+    return results;
   }
 
   async undo(folder: string = Deno.cwd()) {

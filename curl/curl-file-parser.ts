@@ -76,10 +76,9 @@ export class CurlFileParser {
     const contentType = parsed.headers["content-type"];
     if (!parsed.body.raw) {
       if (parsed.body.data) {
-        if (contentType?.includes("application/json")) {
-          return JSON.stringify(parsed.body.data);
-        }
-        return parsed.body.data;
+        return contentType == "application/json"
+          ? JSON.stringify(parsed.body.data)
+          : parsed.body.data;
       }
 
       return "";
