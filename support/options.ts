@@ -27,6 +27,7 @@ export class DefaultOptions extends VisualStudioOptions {
   // Environment file to load.
   options: string | string[] = "";
   scriptFolder = "";
+  tempFolder = "c:/temp";
   args: string[] = [];
   authToken: string = ""; // "none";
   brave = `${Deno.env.get(
@@ -38,12 +39,12 @@ export class DefaultOptions extends VisualStudioOptions {
   chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
   cwdBackup = Deno.cwd();
   git = {
-    cmd: "C:/Users/carlos.gomes/AppData/Local/Programs/Git/cmd/git.exe",
+    cmd: "C:/Program Files/Git/cmd/git.exe",
     mainBranches: ["main", "master", "develop"],
     develop: "develop",
   };
   //develop = "develop";  -- override develop branch
-  helm = "C:/ProgramData/chocoportable/bin/helm.exe";
+  helm = "C:/dev/bin/helm.exe";
   mvn = {
     cmd: "c:\\Program Files\\JetBrains\\IntelliJ IDEA Community Edition 2023.2.2\\plugins\\maven\\lib\\maven3\\bin\\mvn.cmd",
     skipTests: true,

@@ -64,7 +64,9 @@ export class Url {
 
       const body = await getBodyFromResponse(resp);
 
-      if (resp.ok) {
+      if (resp.status == 204) {
+        response.error = "";
+      } else if (resp.ok) {
         const responseContentType = resp.headers.get("Content-Type") || "";
         if (responseContentType) {
           response.error = body?.length > 0 ? "" : "Empty body";
@@ -115,6 +117,10 @@ export class Url {
 
     async function getBodyFromResponse(response: Response) {
       try {
+        if (response.status == 204) {
+          return "";
+        }
+
         return await response.text();
       } catch (error) {
         logger.error(`Failed to get body from response ${error}`);

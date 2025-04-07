@@ -13,6 +13,7 @@ import SwaggerCommands from "./swagger/commands.ts";
 import SystemCommands from "./system/commands.ts";
 import TestCommands from "./test.ts";
 import VisualStudioCommands from "./vs/commands.ts";
+import YarnCommands from "./yarn/commands.ts";
 
 new CurlCommands();
 new DevCommands();
@@ -25,6 +26,7 @@ new SwaggerCommands();
 new SystemCommands();
 new TestCommands();
 new VisualStudioCommands();
+new YarnCommands();
 
 if (!Options.args.length) {
   logger.error("Missing action");

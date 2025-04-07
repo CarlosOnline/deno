@@ -246,13 +246,21 @@ EXEC [Perf].[PerfDataCreate] @Request
         };
       }
 
+      if (resp.status === 204) {
+        return <FetchResponse>{
+          status: resp.status,
+          error: "No content",
+          bodyLength: 0,
+        };
+      }
+
       const body = await resp.text();
       return <FetchResponse>{
         status: resp.status,
         error: body?.length > 0 ? null : "Empty body",
         bodyLength: body?.length,
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Fetch failed ${error} for ${url.substring(0, 80)}`);
       this.stats.failed++;
       return <FetchResponse>{

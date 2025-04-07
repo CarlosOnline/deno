@@ -288,7 +288,7 @@ server:     ${brightCyan(bold(deployInfo.server))}
     const kv = await Deno.openKv();
     let password = Options.password;
 
-    if (!Options.promptPassword) {
+    if (!Options.promptPassword && !Options.force) {
       if (password) {
         await kv.set(["password"], password);
         console.log("Password saved.");

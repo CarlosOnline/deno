@@ -16,7 +16,7 @@ type OcActionCallback = (project: string) => Promise<any>;
 
 export default class OcCommands {
   @command("oc.login", "Login to openshift environment", [
-    "oc.login dev --promptPassword",
+    "oc.login dev --promptPassword --force",
   ])
   async openShiftLogin() {
     if (!Options.env && Options.args.length < 2) {
