@@ -108,8 +108,12 @@ export class File {
     }
   }
 
-  static writeFile(filePath: string, contents: string): void {
-    Deno.writeTextFileSync(filePath, contents);
+  static writeFile(
+    filePath: string,
+    contents: string,
+    options?: Deno.WriteFileOptions
+  ): void {
+    Deno.writeTextFileSync(filePath, contents, options);
   }
 
   static readTextFile(filePath: string): string {

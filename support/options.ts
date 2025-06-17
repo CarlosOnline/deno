@@ -71,7 +71,7 @@ export class DefaultOptions extends VisualStudioOptions {
   }
 }
 
-type OptionsType =
+export type OptionsType =
   | DefaultOptions
   | VisualStudioOptions
   | EnvironmentData
