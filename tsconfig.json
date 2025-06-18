@@ -4,5 +4,8 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictNullChecks": false
-  }
+  },
+  "include" :[
+      "src/**/*.ts"
+  ]
 }
