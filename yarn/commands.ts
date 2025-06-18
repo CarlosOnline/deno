@@ -90,7 +90,7 @@ export default class YarnCommands {
     const env = Options.env || "dev";
 
     const url = `${Options.yarn.cluster[env]}/cluster/apps${getAppSuffix()}`;
-    console.log(`Apps url from ${Options.env} ${env} ${url}`);
+    console.log(`Apps url from ${env} ${url}`);
 
     try {
       const yarn = new Yarn();
@@ -104,27 +104,54 @@ export default class YarnCommands {
         return;
       }
 
-      const results: string[] = [];
+      const results = {
+        console: [] as string[],
+        file: [] as string[],
+        csv: [] as string[],
+      };
+
+      const header = [
+        "App Id".padEnd(30),
+        "Status".padEnd(10),
+        "Result".padEnd(10),
+        "Duration".padEnd(8),
+        "Start Time".padEnd(25),
+        "Name",
+      ];
+      results.console.push(header.join(" - "));
+
       apps.forEach((app) => {
-        results.push(
-          `${brightGreen(app.appId)} ${app.status.padEnd(
-            10
-          )} - ${app.finalStatus.padEnd(10)} - ${app.durationString.padEnd(
-            8
-          )} - ${app.startTime.toLocaleString().padEnd(25)} - ${brightCyan(
-            app.name
-          )}`
+        const parts: string[] = [];
+        parts.push(`${app.appId.padEnd(30)}`);
+        parts.push(`${app.status.padEnd(10)}`);
+        parts.push(`${app.finalStatus.padEnd(10)}`);
+        parts.push(`${app.durationString.padEnd(8)}`);
+        parts.push(`${app.startTime.toLocaleString().padEnd(25)}`);
+        parts.push(`${app.name}`);
+        results.file.push(parts.join(", "));
+        results.csv.push(parts.join(","));
+
+        results.console.push(
+          [
+            `${brightGreen(app.appId.padEnd(30))}`,
+            `${app.status.padEnd(10)}`,
+            `${app.finalStatus.padEnd(10)}`,
+            `${app.durationString.padEnd(8)}`,
+            `${app.startTime.toLocaleString().padEnd(25)}`,
+            `${brightCyan(app.name)}`,
+          ].join(" - ")
         );
       });
 
-      console.log(
-        `${"App Id".padEnd(30)} ${"Status".padEnd(10)} - ${"Result".padEnd(
-          10
-        )} - Duration - ${"Start Time".padEnd(25)} - Name`
-      );
-      console.log(results.join("\n"));
+      console.log(results.console.join("\n"));
 
-      saveLogFile("apps", results.join("\n"), { append: true });
+      saveLogFile("apps", results.file.join("\n") + "\r\n", { append: true });
+      saveLogFile(
+        "apps",
+        results.csv.join("\n") + "\r\n",
+        { append: true },
+        ".csv"
+      );
     } catch (error) {
       console.log(error);
     }
@@ -209,11 +236,12 @@ async function getLogUrl(url: string, idx: number) {
 function saveLogFile(
   fileName: string,
   logs: string,
-  options: Deno.WriteFileOptions = {}
+  options: Deno.WriteFileOptions = {},
+  extension = ".log"
 ) {
   const folder = `${Options.tempFolder}/logs`;
   Utility.path.ensure_directory(folder);
-  const filePath = `${folder}/${fileName}.log`.replaceAll("/", "\\");
+  const filePath = `${folder}/${fileName}${extension}`.replaceAll("/", "\\");
   Utility.file.writeFile(filePath, logs, options);
   console.log(`Logs written to ${filePath}`);
 }
