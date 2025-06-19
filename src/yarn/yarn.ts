@@ -38,8 +38,7 @@ export class Yarn {
   }
 
   public async getApps(url: string): Promise<AppModel[]> {
-    const res = await fetch(url);
-    const html = await res.text();
+    const html = await this.getYarnAppsHtml(url);
 
     const document = new DOMParser().parseFromString(html, "text/html");
 
@@ -97,6 +96,26 @@ export class Yarn {
     const results = orderBy(apps, ["startTime"], ["desc"]) as AppModel[];
 
     return results;
+  }
+
+  private async getYarnAppsHtml(url: string) {
+    if (Options.test) {
+      if (Utility.file.exists("c:\\temp\\yarn-apps.html")) {
+        const html = Utility.file.readTextFile("c:\\temp\\yarn-apps.html");
+        if (html) {
+          return html;
+        }
+      }
+    }
+
+    const res = await fetch(url);
+    const html = await res.text();
+
+    if (Options.test) {
+      Utility.file.writeTextFile("c:\\temp\\yarn-apps.html", html);
+    }
+
+    return html;
   }
 }
 

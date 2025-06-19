@@ -6,7 +6,7 @@ import {
 
 import { brightCyan, brightGreen } from "https://deno.land/std/fmt/colors.ts";
 
-import { command } from "../support/index.ts";
+import { command, DataToTable } from "../support/index.ts";
 import Options from "../options/options.ts";
 import { logger, Utility } from "../utility/index.ts";
 import { Yarn } from "./yarn.ts";
@@ -94,64 +94,40 @@ export default class YarnCommands {
 
     try {
       const yarn = new Yarn();
-      let apps = await yarn.getApps(url);
-      apps = apps
+      const apps = (await yarn.getApps(url))
         .filter((item) => filterByArgs(item.name))
-        .slice(0, Options.limit || 5);
+        .slice(0, Options.limit || 5)
+        .map((app) => {
+          return {
+            "App Id": app.appId,
+            Status: app.status,
+            Result: app.finalStatus,
+            Duration: app.durationString,
+            "Start Time": app.startTime.toLocaleString(),
+            Name: app.name,
+          };
+        });
 
       if (!apps || !apps.length) {
         logger.fatal("No apps found");
         return;
       }
 
-      const results = {
-        console: [] as string[],
-        file: [] as string[],
-        csv: [] as string[],
-      };
-
-      const header = [
-        "App Id".padEnd(30),
-        "Status".padEnd(10),
-        "Result".padEnd(10),
-        "Duration".padEnd(8),
-        "Start Time".padEnd(25),
-        "Name",
-      ];
-      results.console.push(header.join(" - "));
-
-      apps.forEach((app) => {
-        const parts: string[] = [];
-        parts.push(`${app.appId.padEnd(30)}`);
-        parts.push(`${app.status.padEnd(10)}`);
-        parts.push(`${app.finalStatus.padEnd(10)}`);
-        parts.push(`${app.durationString.padEnd(8)}`);
-        parts.push(`${app.startTime.toLocaleString().padEnd(25)}`);
-        parts.push(`${app.name}`);
-        results.file.push(parts.join(", "));
-        results.csv.push(parts.join(","));
-
-        results.console.push(
-          [
-            `${brightGreen(app.appId.padEnd(30))}`,
-            `${app.status.padEnd(10)}`,
-            `${app.finalStatus.padEnd(10)}`,
-            `${app.durationString.padEnd(8)}`,
-            `${app.startTime.toLocaleString().padEnd(25)}`,
-            `${brightCyan(app.name)}`,
-          ].join(" - ")
-        );
-      });
-
-      console.log(results.console.join("\n"));
-
-      saveLogFile("apps", results.file.join("\n") + "\r\n", { append: true });
-      saveLogFile(
-        "apps",
-        results.csv.join("\n") + "\r\n",
-        { append: true },
-        ".csv"
+      console.log(
+        DataToTable.toTable(apps, {
+          "App Id": brightGreen,
+          Name: brightCyan,
+        })
       );
+
+      const json = JSON.stringify(apps, null, 3);
+      saveLogFile("yarn.apps", json, {}, ".json");
+
+      const csv = DataToTable.toCsvRaw(apps);
+      saveLogFile("yarn.apps", csv + "\r\n", { append: true }, ".csv");
+
+      const file = DataToTable.toTable(apps);
+      saveLogFile("yarn.apps", file + "\r\n\r\n", { append: true });
     } catch (error) {
       console.log(error);
     }
