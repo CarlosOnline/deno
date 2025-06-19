@@ -8,20 +8,6 @@ type Formats = {
 };
 
 export class DataToTable {
-  private static getValue(
-    value: string,
-    length: number,
-    format: ColorFunction
-  ): string {
-    value = value || "";
-
-    if (format) {
-      value = format(value);
-    }
-
-    return value.padEnd(length);
-  }
-
   static toTable(table: Dict[], formats: Formats = {}): string {
     if (!table || table.length === 0) {
       return "";
@@ -87,5 +73,19 @@ export class DataToTable {
     }
 
     return lengths;
+  }
+
+  private static getValue(
+    value: string,
+    length: number,
+    format: ColorFunction
+  ): string {
+    value = (value || "").padEnd(length);
+
+    if (format) {
+      value = format(value);
+    }
+
+    return value;
   }
 }

@@ -110,10 +110,7 @@ export class Yarn {
 
     const res = await fetch(url);
     const html = await res.text();
-
-    if (Options.test) {
-      Utility.file.writeTextFile("c:\\temp\\yarn-apps.html", html);
-    }
+    Utility.file.writeTextFile("c:\\temp\\yarn-apps.html", html);
 
     return html;
   }
