@@ -5,6 +5,12 @@ import { logger, Utility, Url, UrlInfo } from "../utility/index.ts";
 import { FetchResponse } from "../utility/utility.url.ts";
 import { CurlFileParser } from "./curl-file-parser.ts";
 import { red, green, yellow } from "https://deno.land/std/fmt/colors.ts";
+import {
+  bold,
+  brightGreen,
+  brightWhite,
+  brightCyan,
+} from "https://deno.land/std/fmt/colors.ts";
 
 const OneSecondMs = 1000; // 1 second
 
@@ -179,7 +185,7 @@ export class CurlCommandRunner {
 
     Utility.path.ensure_directory(Utility.path.getFolder(outputFilePath));
     Utility.file.writeTextFile(outputFilePath, output);
-    logger.info(`Generated ${outputFilePath}`);
+    logger.info(`Generated ${brightGreen(outputFilePath)}`);
   }
 
   private generateCurlCommandsOutput(endpoints: UrlInfo[]) {
@@ -417,7 +423,7 @@ export class CurlCommandRunner {
       JSON.stringify(results, null, 3)
     );
 
-    logger.info(`Generated ${resultsJsonFile}`);
+    logger.info(`Generated ${brightGreen(resultsJsonFile)}`);
 
     function toCsvLine(item: CurlCommandResult): string {
       const startTime = item.startTime.toISOString();

@@ -18,25 +18,6 @@ import {
 import { AppModel } from "./app.model.ts";
 
 export class Yarn {
-  private async runAsync(
-    args: string[],
-    folder: string = Deno.cwd(),
-    runOptions: RunOptions = {
-      ...DefaultRunOptions,
-      ...{ verbose: Options.verbose },
-      ...{ capture: true },
-    }
-  ) {
-    const results = await Utility.run.runAsync(Options.oc, args, folder, {
-      ...runOptions,
-      ...{ verbose: Options.verbose },
-    });
-    if (results && results.startsWith("ERROR")) {
-      logger.error(`oc ${args.join(" ")} failed for ${folder}`);
-    }
-    return results;
-  }
-
   public async getApps(url: string): Promise<AppModel[]> {
     const html = await this.getYarnAppsHtml(url);
 
@@ -98,6 +79,25 @@ export class Yarn {
     return results;
   }
 
+  public async getAppLog(appId: string, env: string, idx = 0) {
+    const url = `${Options.yarn.cluster[env]}/cluster/app/${appId}`;
+
+    const logUrl = await this.getLogUrl(url, idx);
+    if (!logUrl) {
+      return null;
+    }
+
+    const fullLogUrl = `${logUrl}/stderr/?start=0`;
+    const logs = await this.fetchLogContents(fullLogUrl);
+
+    return {
+      url: url,
+      logUrl: logUrl,
+      fullLogUrl: fullLogUrl,
+      logs: logs,
+    };
+  }
+
   private async getYarnAppsHtml(url: string) {
     if (Options.test) {
       if (Utility.file.exists("c:\\temp\\yarn-apps.html")) {
@@ -113,6 +113,81 @@ export class Yarn {
     Utility.file.writeTextFile("c:\\temp\\yarn-apps.html", html);
 
     return html;
+  }
+
+  private async getLogUrl(url: string, idx: number) {
+    const res = await fetch(url);
+    const html = await res.text();
+
+    const document = new DOMParser().parseFromString(html, "text/html");
+
+    const scripts = document
+      .getElementsByTagName("script")
+      .filter((script) => {
+        return script.textContent.includes("/node/containerlogs/");
+      })
+      .flat();
+
+    if (!scripts || !scripts.length) {
+      logger.fatal("No script tags with logs found");
+      return;
+    }
+
+    return this.getHref(scripts[0], idx);
+  }
+
+  private getHref(script: Element, idx: number) {
+    const contents = script.textContent
+      .replace(" var attemptsTableData=", "")
+      .trim();
+
+    const hrefs = contents
+      .split(",")
+      .filter((item) => item.includes("/node/containerlogs/"))
+      .map((item) => {
+        return this.getHrefs(item);
+      })
+      .flat();
+
+    console.log(hrefs);
+    if (!hrefs.length) {
+      logger.fatal("No logs found");
+      return null;
+    }
+
+    return hrefs[Math.min(hrefs.length - 1, idx)];
+  }
+
+  private getHrefs(anchorHtml: string) {
+    const document = new DOMParser().parseFromString(
+      `<html>${anchorHtml}</html>`,
+      "text/html"
+    );
+
+    return document
+      .getElementsByTagName("a")
+      .map((a: any) => {
+        console.log(a.getAttribute("href"));
+        return a.getAttribute("href") as string;
+      })
+      .filter((item) => item.includes("/node/containerlogs/"));
+  }
+
+  private async fetchLogContents(url: string) {
+    try {
+      const res = await fetch(url);
+      const html = await res.text();
+
+      const document = new DOMParser().parseFromString(html, "text/html");
+
+      const contents =
+        document.querySelector(".content")?.textContent.replaceAll("\r", "") ||
+        "";
+      return contents.trim();
+    } catch (error) {
+      console.log(error);
+    }
+    return "";
   }
 }
 

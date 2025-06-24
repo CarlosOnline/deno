@@ -26,29 +26,28 @@ export default class YarnCommands {
     const env =
       Options.args.length > 3 ? Options.args[3] : Options.env || "dev";
 
-    const url = `${Options.yarn.cluster[env]}/cluster/app/${appId}`;
-    console.log(`App url from ${Options.env} ${env} ${url}`);
-
     try {
-      const logUrl = await getLogUrl(url, idx);
-      console.log(`Log url from ${logUrl}`);
+      const yarn = new Yarn();
 
-      if (!logUrl) {
-        logger.fatal("No logs found");
+      const results = await yarn.getAppLog(appId, env, idx);
+      if (!results || !results.logs) {
+        logger.fatal("No logs found for application id: " + appId);
         return;
       }
 
-      const fullLogUrl = `${logUrl}/stderr/?start=0`;
-      const logs = await fetchLogContents(fullLogUrl);
-      if (logs) {
-        saveLogFile(appId, logs);
-        saveLogFile("latest", logs);
+      console.log(`App url from ${Options.env} ${env} ${results.url}`);
+      console.log(`Log url from ${results.logUrl}\n`);
+
+      if (results.logs) {
+        saveLogFile(appId, results.logs);
+        saveLogFile("latest", results.logs);
       }
 
       if (Options.open) {
-        browse(url);
-        browse(fullLogUrl);
+        browse(results.url);
+        browse(results.fullLogUrl);
       }
+      console.log();
     } catch (error) {
       console.log(error);
     }
@@ -96,13 +95,13 @@ export default class YarnCommands {
       const yarn = new Yarn();
       const apps = (await yarn.getApps(url))
         .filter((item) => filterByArgs(item.name))
-        .slice(0, Options.limit || 5)
+        .slice(0, Options.limit || 10)
         .map((app) => {
           return {
             "App Id": app.appId,
             Status: app.status,
             Result: app.finalStatus,
-            Duration: app.durationString,
+            Duration: app.durationString || "        ",
             "Start Time": app.startTime.toLocaleString(),
             Name: app.name,
           };
@@ -134,81 +133,6 @@ export default class YarnCommands {
   }
 }
 
-function getHref(script: Element, idx: number) {
-  const contents = script.textContent
-    .replace(" var attemptsTableData=", "")
-    .trim();
-
-  const hrefs = contents
-    .split(",")
-    .filter((item) => item.includes("/node/containerlogs/"))
-    .map((item) => {
-      return getHrefs(item);
-    })
-    .flat();
-
-  console.log(hrefs);
-  if (!hrefs.length) {
-    logger.fatal("No logs found");
-    return null;
-  }
-
-  return hrefs[Math.min(hrefs.length - 1, idx)];
-}
-
-function getHrefs(anchorHtml: string) {
-  const document = new DOMParser().parseFromString(
-    `<html>${anchorHtml}</html>`,
-    "text/html"
-  );
-
-  return document
-    .getElementsByTagName("a")
-    .map((a: any) => {
-      console.log(a.getAttribute("href"));
-      return a.getAttribute("href") as string;
-    })
-    .filter((item) => item.includes("/node/containerlogs/"));
-}
-
-async function fetchLogContents(url: string) {
-  try {
-    const res = await fetch(url);
-    const html = await res.text();
-
-    const document = new DOMParser().parseFromString(html, "text/html");
-
-    const contents =
-      document.querySelector(".content")?.textContent.replaceAll("\r", "") ||
-      "";
-    return contents.trim();
-  } catch (error) {
-    console.log(error);
-  }
-  return "";
-}
-
-async function getLogUrl(url: string, idx: number) {
-  const res = await fetch(url);
-  const html = await res.text();
-
-  const document = new DOMParser().parseFromString(html, "text/html");
-
-  const scripts = document
-    .getElementsByTagName("script")
-    .filter((script) => {
-      return script.textContent.includes("/node/containerlogs/");
-    })
-    .flat();
-
-  if (!scripts || !scripts.length) {
-    logger.fatal("No script tags with logs found");
-    return;
-  }
-
-  return getHref(scripts[0], idx);
-}
-
 function saveLogFile(
   fileName: string,
   logs: string,
@@ -219,7 +143,7 @@ function saveLogFile(
   Utility.path.ensure_directory(folder);
   const filePath = `${folder}/${fileName}${extension}`.replaceAll("/", "\\");
   Utility.file.writeFile(filePath, logs, options);
-  console.log(`Logs written to ${filePath}`);
+  console.log(`Logs written to ${brightGreen(filePath)}`);
 }
 
 function browse(url: string) {
