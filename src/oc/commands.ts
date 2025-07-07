@@ -11,6 +11,7 @@ import Options from "../options/options.ts";
 import { logger } from "../utility/index.ts";
 import { Oc } from "./index.ts";
 import { DeployInfo } from "./deploy-info.ts";
+import { Utility } from "../utility/utility.ts";
 
 type OcActionCallback = (project: string) => Promise<any>;
 
@@ -130,6 +131,64 @@ export default class OcCommands {
       );
       console.log("");
     });
+  }
+
+  @command("oc.logs", "Get OpenShift logs", ["oc.logs dev name"])
+  async logs() {
+    const service: string = (
+      Options.service ||
+      Options.getArg(2) ||
+      ""
+    ).toLocaleLowerCase();
+    if (!service) {
+      logger.fatal("Missing service name");
+    }
+
+    const profile = OcCommands.getProfile();
+    const deployInfo = await OcCommands.ensureProfile(profile);
+
+    const oc = new Oc();
+
+    const results = await OcCommands.runOcCommand<any[]>(
+      deployInfo,
+      (project) => oc.pods(project)
+    );
+
+    const pods = results
+      .map((result) => {
+        return result.values.map((item) => {
+          return {
+            project: result.project,
+            name: item.name,
+            component: item.component,
+          };
+        });
+      })
+      .flat()
+      .filter(
+        (result) =>
+          result.project.toLocaleLowerCase() === service ||
+          result.name.toLocaleLowerCase() === service ||
+          result.component.toLocaleLowerCase() === service
+      );
+
+    Utility.forEachParallel(pods, async (result) => {
+      await OcCommands.saveLogFile(result.project, result.name);
+    });
+  }
+
+  private static async saveLogFile(
+    namespace: string,
+    pod: string,
+    folder: string = Deno.cwd()
+  ) {
+    const oc = new Oc();
+    const logs = await oc.logs(namespace, pod);
+    const now = new Date();
+    const formattedDate = now.toISOString().replace(/[:.]/g, "-");
+    const fileName = `${folder}\\${namespace}-${pod}.${formattedDate}.log`;
+    await Deno.writeTextFile(fileName, logs);
+    console.log(`Logs saved ${namespace} ${pod} to ${fileName}`);
   }
 
   private static async runOcCommand<T>(

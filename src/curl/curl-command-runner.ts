@@ -1,16 +1,12 @@
 // deno-lint-ignore-file no-explicit-any ban-unused-ignore
+import { brightMagenta } from "https://deno.land/std@0.149.0/fmt/colors.ts";
 import Token from "../dev/token.ts";
 import Options from "../options/options.ts";
 import { logger, Utility, Url, UrlInfo } from "../utility/index.ts";
 import { FetchResponse } from "../utility/utility.url.ts";
 import { CurlFileParser } from "./curl-file-parser.ts";
 import { red, green, yellow } from "https://deno.land/std/fmt/colors.ts";
-import {
-  bold,
-  brightGreen,
-  brightWhite,
-  brightCyan,
-} from "https://deno.land/std/fmt/colors.ts";
+import { brightGreen } from "https://deno.land/std/fmt/colors.ts";
 
 const OneSecondMs = 1000; // 1 second
 
@@ -87,11 +83,6 @@ export class CurlCommandRunner {
       const results = await this.runEndpoints(endpoints);
       this.writeResults(results, filePath);
 
-      const updateFilePath = `${Utility.path.getFolder(
-        filePath
-      )}\\Update\\${Utility.path.getFileName(filePath)}`;
-      this.generateUpdateCommand(results, updateFilePath);
-
       this.displayResults(results);
 
       const delay = (Options.delay || 0) + this.consecutiveDelay;
@@ -118,11 +109,6 @@ export class CurlCommandRunner {
 
       const results = await this.runEndpoints(endpoints);
       this.writeResults(results, filePath);
-
-      const updateFilePath = `${Utility.path.getFolder(
-        filePath
-      )}\\Update\\${Utility.path.getFileName(filePath)}`;
-      this.generateUpdateCommand(results, updateFilePath);
 
       this.displayResults(results);
     });
@@ -279,12 +265,12 @@ export class CurlCommandRunner {
   private async runEndpointsWithTimer(endpoints: UrlInfo[], token: string) {
     if (Options.parallel) {
       return await Promise.all(
-        endpoints.map((endpoint: UrlInfo) => this.timeIt(endpoint, token))
+        endpoints.map((endpoint: UrlInfo) => this.runEndpoint(endpoint, token))
       );
     } else {
       return await Utility.forEachSequential(
         endpoints,
-        async (endpoint: UrlInfo) => await this.timeIt(endpoint, token)
+        async (endpoint: UrlInfo) => await this.runEndpoint(endpoint, token)
       );
     }
   }
@@ -333,7 +319,7 @@ export class CurlCommandRunner {
     return results;
   }
 
-  private async timeIt(endpoint: UrlInfo, token: string) {
+  private async runEndpoint(endpoint: UrlInfo, token: string) {
     const now = new Date();
     const start = Date.now();
 
@@ -404,16 +390,7 @@ export class CurlCommandRunner {
     const folder = Utility.path.getFolder(sourceFilePath) + "\\results";
     Utility.path.ensure_directory(folder);
 
-    const allResultsCsvFilePath = `${folder}\\results.csv`;
-    const allResultsCsv = results.map((item) => toCsvLine(item));
-    Utility.file.writeTextFile(
-      allResultsCsvFilePath,
-      allResultsCsv.join("\r\n"),
-      {
-        append: true,
-        create: true,
-      }
-    );
+    this.writeCsvResults(results, sourceFilePath);
 
     const resultsFileName = Utility.path.getFileName(sourceFilePath);
     const resultsJsonFile = `${folder}\\${resultsFileName}.json`;
@@ -424,12 +401,39 @@ export class CurlCommandRunner {
     );
 
     logger.info(`Generated ${brightGreen(resultsJsonFile)}`);
+  }
+
+  private writeCsvResults(
+    results: CurlCommandResult[],
+    sourceFilePath: string
+  ) {
+    const folder = Utility.path.getFolder(sourceFilePath) + "\\results";
+    Utility.path.ensure_directory(folder);
+
+    const allResultsCsvFilePath = `${folder}\\results.csv`;
+    if (!Utility.file.exists(allResultsCsvFilePath)) {
+      const headerLine = toCsvHeaderLine();
+      Utility.file.writeTextFile(allResultsCsvFilePath, headerLine, {
+        create: true,
+      });
+    }
+
+    const allResultsCsv = results.map((item) => toCsvLine(item));
+    Utility.file.writeTextFile(
+      allResultsCsvFilePath,
+      allResultsCsv.join("\r\n"),
+      {
+        append: true,
+        create: true,
+      }
+    );
+
+    logger.info(`Generated ${brightMagenta(allResultsCsvFilePath)}`);
 
     function toCsvLine(item: CurlCommandResult): string {
       const startTime = item.startTime.toISOString();
       const endTime = item.endTime.toISOString();
       const parts = [
-        "###",
         item.response.status,
         item.response.bodyLength,
         item.urlInfo.method,
@@ -439,8 +443,25 @@ export class CurlCommandRunner {
         endTime,
         item.urlInfo.hostUrl,
         item.urlInfo.endpoint,
-        item.response.error?.replace(/,/g, ""),
+        item.response.error?.replace(/,\r\n/g, "").substring(0, 100),
         item.urlInfo.url.replace(/,/g, ""),
+      ];
+      return parts.join(",");
+    }
+
+    function toCsvHeaderLine(): string {
+      const parts = [
+        "status",
+        "bodyLength",
+        "method",
+        "delay",
+        "duration",
+        "startTime",
+        "endTime",
+        "hostUrl",
+        "endpoint",
+        "error",
+        "url",
       ];
       return parts.join(",");
     }

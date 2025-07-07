@@ -109,6 +109,18 @@ export class Oc {
       .filter((item) => item);
   }
 
+  async logs(namespace: string, pod: string) {
+    const output = await this.runAsync(
+      ["logs", "--namespace", namespace, pod],
+      Deno.cwd(),
+      {
+        capture: true,
+      }
+    );
+
+    return output;
+  }
+
   async login(deployInfo: DeployInfo) {
     const userName = Deno.env.get("USERNAME") as string;
     const password = await this.getPassword();

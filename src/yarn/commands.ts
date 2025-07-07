@@ -1,9 +1,4 @@
 // deno-lint-ignore-file no-explicit-any ban-unused-ignore
-import {
-  DOMParser,
-  Element,
-} from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
-
 import { brightCyan, brightGreen } from "https://deno.land/std/fmt/colors.ts";
 
 import { command, DataToTable } from "../support/index.ts";
@@ -40,7 +35,7 @@ export default class YarnCommands {
 
       if (results.logs) {
         saveLogFile(appId, results.logs);
-        saveLogFile("latest", results.logs);
+        saveLogFile("latest", results.logs, {}, ".log", brightGreen);
       }
 
       if (Options.open) {
@@ -118,6 +113,7 @@ export default class YarnCommands {
           Name: brightCyan,
         })
       );
+      console.log();
 
       const json = JSON.stringify(apps, null, 3);
       saveLogFile("yarn.apps", json, {}, ".json");
@@ -137,13 +133,14 @@ function saveLogFile(
   fileName: string,
   logs: string,
   options: Deno.WriteFileOptions = {},
-  extension = ".log"
+  extension = ".log",
+  colorFn = (value: string) => value
 ) {
   const folder = `${Options.tempFolder}/logs`;
   Utility.path.ensure_directory(folder);
   const filePath = `${folder}/${fileName}${extension}`.replaceAll("/", "\\");
   Utility.file.writeFile(filePath, logs, options);
-  console.log(`Logs written to ${brightGreen(filePath)}`);
+  console.log(`Logs written to ${colorFn(filePath)}`);
 }
 
 function browse(url: string) {
