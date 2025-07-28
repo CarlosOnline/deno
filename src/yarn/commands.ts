@@ -86,46 +86,59 @@ export default class YarnCommands {
     const url = `${Options.yarn.cluster[env]}/cluster/apps${getAppSuffix()}`;
     console.log(`Apps url from ${env} ${url}`);
 
-    try {
-      const yarn = new Yarn();
-      const apps = (await yarn.getApps(url))
-        .filter((item) => filterByArgs(item.name))
-        .slice(0, Options.limit || 10)
-        .map((app) => {
-          return {
-            "App Id": app.appId,
-            Status: app.status,
-            Result: app.finalStatus,
-            Duration: app.durationString || "        ",
-            "Start Time": app.startTime.toLocaleString(),
-            Name: app.name,
-          };
-        });
-
-      if (!apps || !apps.length) {
-        logger.fatal("No apps found");
-        return;
+    if (Options.loop) {
+      const interval = Options.interval || 5 * 60;
+      console.log(`Running every ${interval} seconds`);
+      while (true) {
+        await runYarnApps(url);
+        await Utility.sleep(interval);
       }
-
-      console.log(
-        DataToTable.toTable(apps, {
-          "App Id": brightGreen,
-          Name: brightCyan,
-        })
-      );
-      console.log();
-
-      const json = JSON.stringify(apps, null, 3);
-      saveLogFile("yarn.apps", json, {}, ".json");
-
-      const csv = DataToTable.toCsvRaw(apps);
-      saveLogFile("yarn.apps", csv + "\r\n", { append: true }, ".csv");
-
-      const file = DataToTable.toTable(apps);
-      saveLogFile("yarn.apps", file + "\r\n\r\n", { append: true });
-    } catch (error) {
-      console.log(error);
+    } else {
+      await runYarnApps(url);
     }
+  }
+}
+
+async function runYarnApps(url: string) {
+  try {
+    const yarn = new Yarn();
+    const apps = (await yarn.getApps(url))
+      .filter((item) => filterByArgs(item.name))
+      .slice(0, Options.limit || 10)
+      .map((app) => {
+        return {
+          "App Id": app.appId,
+          Status: app.status,
+          Result: app.finalStatus,
+          Duration: app.durationString || "        ",
+          "Start Time": app.startTime.toLocaleString(),
+          Name: app.name.substring(0, 60),
+        };
+      });
+
+    if (!apps || !apps.length) {
+      logger.warn("No apps found");
+      return;
+    }
+
+    console.log(
+      DataToTable.toTable(apps, {
+        "App Id": brightGreen,
+        Name: brightCyan,
+      })
+    );
+    console.log();
+
+    const json = JSON.stringify(apps, null, 3);
+    saveLogFile("yarn.apps", json, {}, ".json");
+
+    const csv = DataToTable.toCsvRaw(apps);
+    saveLogFile("yarn.apps", csv + "\r\n", { append: true }, ".csv");
+
+    const file = DataToTable.toTable(apps);
+    saveLogFile("yarn.apps", file + "\r\n\r\n", { append: true });
+  } catch (error) {
+    console.log(error);
   }
 }
 

@@ -412,7 +412,7 @@ export class CurlCommandRunner {
 
     const allResultsCsvFilePath = `${folder}\\results.csv`;
     if (!Utility.file.exists(allResultsCsvFilePath)) {
-      const headerLine = toCsvHeaderLine();
+      const headerLine = toCsvHeaderLine() + "\r\n";
       Utility.file.writeTextFile(allResultsCsvFilePath, headerLine, {
         create: true,
       });
@@ -421,7 +421,7 @@ export class CurlCommandRunner {
     const allResultsCsv = results.map((item) => toCsvLine(item));
     Utility.file.writeTextFile(
       allResultsCsvFilePath,
-      allResultsCsv.join("\r\n"),
+      allResultsCsv.join("\r\n") + "\r\n",
       {
         append: true,
         create: true,

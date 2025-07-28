@@ -39,7 +39,9 @@ export class Yarn {
       .map((script) => {
         const json = script.textContent
           .trim()
-          .replace("var appsTableData=", "");
+          .replace("var appsTableData=", "")
+          .replaceAll("\\", "");
+
         const appsData = JSON.parse(json);
         if (!appsData || !appsData.length) {
           logger.fatal("No apps found in appsTableData");

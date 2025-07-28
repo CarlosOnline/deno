@@ -4,6 +4,7 @@ import {
   brightGreen,
   brightWhite,
   brightCyan,
+  brightYellow,
 } from "https://deno.land/std/fmt/colors.ts";
 
 import { command } from "../support/index.ts";
@@ -173,7 +174,17 @@ export default class OcCommands {
       );
 
     Utility.forEachParallel(pods, async (result) => {
-      await OcCommands.saveLogFile(result.project, result.name);
+      const filePath = await OcCommands.saveLogFile(
+        result.project,
+        result.name
+      );
+
+      console.log(Utility.file.readTextFile(filePath));
+      console.log(
+        brightYellow(
+          `\nLogs saved for ${result.project} ${result.name} to ${filePath}`
+        )
+      );
     });
   }
 
@@ -186,9 +197,9 @@ export default class OcCommands {
     const logs = await oc.logs(namespace, pod);
     const now = new Date();
     const formattedDate = now.toISOString().replace(/[:.]/g, "-");
-    const fileName = `${folder}\\${namespace}-${pod}.${formattedDate}.log`;
-    await Deno.writeTextFile(fileName, logs);
-    console.log(`Logs saved ${namespace} ${pod} to ${fileName}`);
+    const filePath = `${folder}\\${namespace}-${pod}.${formattedDate}.log`;
+    await Deno.writeTextFile(filePath, logs);
+    return filePath;
   }
 
   private static async runOcCommand<T>(
